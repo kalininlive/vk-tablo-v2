@@ -59,6 +59,30 @@ ensure_node20() {
   apt-get install -y nodejs
 }
 
+install_docker_compose() {
+  if apt-get install -y docker-compose-plugin; then
+    return
+  fi
+
+  echo "Пакет docker-compose-plugin не найден, ставлю docker-compose"
+  apt-get install -y docker-compose
+}
+
+compose() {
+  if docker compose version >/dev/null 2>&1; then
+    docker compose "$@"
+    return
+  fi
+
+  if command -v docker-compose >/dev/null 2>&1; then
+    docker-compose "$@"
+    return
+  fi
+
+  echo "Ошибка: не найден docker compose (plugin или docker-compose)"
+  exit 1
+}
+
 configure_obs_repo() {
   if ! grep -Rq "obsproject/obs-studio" /etc/apt/sources.list /etc/apt/sources.list.d 2>/dev/null; then
     add-apt-repository -y ppa:obsproject/obs-studio
@@ -148,8 +172,9 @@ apt-get install -y \
   python3-pip \
   python3-flask \
   python3-psycopg2 \
-  docker.io \
-  docker-compose-plugin
+  docker.io
+
+install_docker_compose
 
 configure_obs_repo
 apt-get install -y obs-studio
@@ -213,8 +238,8 @@ set +a
 echo "[5/10] Запуск Docker сервисов"
 systemctl enable docker
 systemctl restart docker
-docker compose -f "${INSTALL_DIR}/docker-compose.db.yml" down -v --remove-orphans || true
-docker compose -f "${INSTALL_DIR}/docker-compose.db.yml" up -d --remove-orphans
+compose -f "${INSTALL_DIR}/docker-compose.db.yml" down -v --remove-orphans || true
+compose -f "${INSTALL_DIR}/docker-compose.db.yml" up -d --remove-orphans
 
 echo "[6/10] Инициализация PostgreSQL / Realtime"
 for _ in {1..45}; do

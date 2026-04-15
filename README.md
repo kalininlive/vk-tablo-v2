@@ -50,6 +50,7 @@ bash install.sh
 Что делает `install.sh`:
 
 1. Ставит зависимости (Docker, OBS, Node 20, nginx, certbot, python)
+   - автоматически использует `docker compose` или `docker-compose` (что доступно в системе)
 2. Поднимает Docker-контейнеры БД/RTMP
 3. Инициализирует SQL схему и app_config
 4. Ставит systemd сервис `vk-stream-control`
