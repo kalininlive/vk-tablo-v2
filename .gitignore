@@ -5,6 +5,8 @@ tasks.md
 .env
 .env.*
 !.env.example
+app/.env
+__pycache__/
 *.key
 *.pem
 *.crt

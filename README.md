@@ -1,12 +1,13 @@
 # VK Tablo v2
 
-Минимальный репозиторий для развёртывания серверной инфраструктуры VK-трансляций на Ubuntu 22.04.
+Репозиторий для one-command развёртывания VK-трансляции на Ubuntu 22.04.
 
 ## Что в репозитории
 
 - [`install.sh`](https://github.com/kalininlive/vk-tablo-v2/blob/master/install.sh) — установщик инфраструктуры (один запуск)
 - [`docker-compose.db.yml`](https://github.com/kalininlive/vk-tablo-v2/blob/master/docker-compose.db.yml) — PostgreSQL + PostgREST + Realtime + RTMP
 - [`supabase_setup.sql`](https://github.com/kalininlive/vk-tablo-v2/blob/master/supabase_setup.sql) — схема БД и RLS
+- [`api.py`](https://github.com/kalininlive/vk-tablo-v2/blob/master/api.py) — Flask API для управления стримом
 - [`.gitattributes`](https://github.com/kalininlive/vk-tablo-v2/blob/master/.gitattributes) и [`.gitignore`](https://github.com/kalininlive/vk-tablo-v2/blob/master/.gitignore) — корректные окончания строк и защита от утечки секретов
 
 ## Быстрые ссылки
@@ -16,6 +17,7 @@
 - `install.sh`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/install.sh>
 - `docker-compose.db.yml`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/docker-compose.db.yml>
 - `supabase_setup.sql`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/supabase_setup.sql>
+- `api.py`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/api.py>
 
 ## Требования к серверу
 
@@ -24,7 +26,7 @@
 - Открытые порты: `80`, `443`, `1935`
 - Домен с A-записью на IP сервера
 
-## Быстрый запуск
+## Быстрый запуск (1 команда)
 
 ```bash
 git clone https://github.com/kalininlive/vk-tablo-v2.git /opt/vk-stream
@@ -40,10 +42,20 @@ bash install.sh
 
 Секреты (`JWT_SECRET`, `SECRET_KEY_BASE`, `DB_PASSWORD`, `CONTROL_SECRET`) генерируются автоматически при первом запуске и сохраняются только в локальном `.vps.env`.
 
+Что делает `install.sh`:
+
+1. Ставит зависимости (Docker, OBS, Node 20, nginx, certbot, python)
+2. Поднимает Docker-контейнеры БД/RTMP
+3. Инициализирует SQL схему и app_config
+4. Ставит systemd сервис `vk-stream-control`
+5. Собирает frontend и публикует в `/var/www/vk-stream`
+6. Выпускает SSL сертификат и включает nginx reverse proxy
+
 После запуска проверка:
 
 ```bash
 docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}"
+curl -s https://ВАШ_ДОМЕН/stream-control/status
 ```
 
 Ожидаемые контейнеры в статусе `Up`:
