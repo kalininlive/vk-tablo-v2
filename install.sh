@@ -229,7 +229,12 @@ http {
 EOF
 
 echo "[4/10] Подготовка docker compose"
-cp -f "${PROJECT_ROOT}/docker-compose.db.yml" "${INSTALL_DIR}/docker-compose.db.yml"
+SOURCE_COMPOSE="$(realpath "${PROJECT_ROOT}/docker-compose.db.yml")"
+TARGET_COMPOSE="$(realpath -m "${INSTALL_DIR}/docker-compose.db.yml")"
+
+if [[ "${SOURCE_COMPOSE}" != "${TARGET_COMPOSE}" ]]; then
+  cp -f "${PROJECT_ROOT}/docker-compose.db.yml" "${INSTALL_DIR}/docker-compose.db.yml"
+fi
 
 set -a
 source "${PROJECT_ROOT}/${ENV_FILE}"
