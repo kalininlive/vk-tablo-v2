@@ -1,0 +1,75 @@
+services:
+  vk-postgres:
+    image: postgres:15-alpine
+    container_name: vk-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  vk-postgrest:
+    image: postgrest/postgrest:v12.2.3
+    container_name: vk-postgrest
+    restart: unless-stopped
+    depends_on:
+      vk-postgres:
+        condition: service_healthy
+    environment:
+      PGRST_DB_URI: postgres://postgres:${DB_PASSWORD}@vk-postgres:5432/postgres
+      PGRST_DB_SCHEMAS: public
+      PGRST_DB_ANON_ROLE: anon
+      PGRST_JWT_SECRET: ${JWT_SECRET}
+      PGRST_SERVER_PROXY_URI: https://${SERVER_HOST}
+    ports:
+      - "127.0.0.1:3000:3000"
+
+  vk-realtime:
+    image: supabase/realtime:v2.31.0
+    container_name: vk-realtime
+    restart: unless-stopped
+    depends_on:
+      vk-postgres:
+        condition: service_healthy
+    environment:
+      APP_NAME: realtime
+      RLIMIT_NOFILE: "65536"
+      DB_HOST: vk-postgres
+      DB_PORT: 5432
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_AFTER_CONNECT_QUERY: 'SET search_path TO _realtime'
+      DB_ENC_KEY: ${SECRET_KEY_BASE}
+      API_JWT_SECRET: ${JWT_SECRET}
+      SECRET_KEY_BASE: ${SECRET_KEY_BASE}
+      ERL_AFLAGS: '-proto_dist inet_tcp'
+      DNS_NODES: "''"
+      PORT: 4000
+      SEED_SELF_HOST: "true"
+      RUN_JANITOR: "true"
+    ports:
+      - "127.0.0.1:4000:4000"
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+
+  vk-nginx-rtmp:
+    image: tiangolo/nginx-rtmp
+    container_name: vk-nginx-rtmp
+    restart: unless-stopped
+    ports:
+      - "1935:1935"
+      - "8080:8080"
+    volumes:
+      - /opt/vk-stream/nginx-rtmp.conf:/etc/nginx/nginx.conf:ro
