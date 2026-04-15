@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+import configparser
 import json
 import os
 import signal
@@ -14,6 +15,7 @@ app = Flask(__name__)
 API_PORT = 5000
 API_SECRET = os.getenv("CONTROL_SECRET", "")
 XVFB_DISPLAY = ":99"
+OBS_HOME = "/root/.config/obs-studio"
 
 obs_process: Optional[subprocess.Popen] = None
 xvfb_process: Optional[subprocess.Popen] = None
@@ -64,7 +66,7 @@ def read_active_channel() -> Optional[Dict[str, str]]:
 
 
 def ensure_obs_files(channel: Dict[str, str]):
-    obs_home = "/root/.config/obs-studio"
+    obs_home = OBS_HOME
     basic_dir = os.path.join(obs_home, "basic")
     scenes_dir = os.path.join(basic_dir, "scenes")
     profile_dir = os.path.join(basic_dir, "profiles", "vk-stream")
@@ -195,6 +197,51 @@ Profile=vk-stream
         )
 
 
+def clear_safe_mode_flag():
+    global_ini = os.path.join(OBS_HOME, "global.ini")
+    os.makedirs(OBS_HOME, exist_ok=True)
+    parser = configparser.ConfigParser()
+    if os.path.exists(global_ini):
+        parser.read(global_ini, encoding="utf-8")
+    if "General" not in parser:
+        parser["General"] = {}
+    parser["General"]["UncleanShutdown"] = "false"
+    if "Basic" not in parser:
+        parser["Basic"] = {}
+    parser["Basic"]["SceneCollection"] = "vk-stream"
+    parser["Basic"]["Profile"] = "vk-stream"
+    with open(global_ini, "w", encoding="utf-8") as file:
+        parser.write(file)
+
+
+def load_match_state() -> Dict[str, Any]:
+    with db_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute("SELECT state FROM football_match_state WHERE id = 1")
+            row = cur.fetchone()
+            return row[0] if row else {}
+
+
+def save_match_state(state: Dict[str, Any]):
+    with db_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                "UPDATE football_match_state SET state = %s WHERE id = 1",
+                (json.dumps(state),),
+            )
+        conn.commit()
+
+
+def deep_merge(base: Dict[str, Any], patch: Dict[str, Any]) -> Dict[str, Any]:
+    out = dict(base)
+    for key, value in patch.items():
+        if isinstance(value, dict) and isinstance(out.get(key), dict):
+            out[key] = deep_merge(out[key], value)
+        else:
+            out[key] = value
+    return out
+
+
 @app.get("/status")
 def status():
     return jsonify({"status": "ok", "streaming": is_alive(obs_process)})
@@ -211,6 +258,7 @@ def start_stream():
         return jsonify({"error": "Нет активного VK-канала"}), 400
 
     ensure_obs_files(channel)
+    clear_safe_mode_flag()
 
     if not is_alive(xvfb_process):
         xvfb_process = subprocess.Popen(
@@ -264,12 +312,29 @@ def stop_stream():
 
 @app.post("/overlay/update")
 def overlay_update():
-    return jsonify({"status": "ok", "message": "Not implemented in this stage"})
+    body = request.get_json(silent=True) or {}
+    if not isinstance(body, dict):
+        return jsonify({"error": "invalid payload"}), 400
+    current = load_match_state()
+    updated = deep_merge(current, body)
+    save_match_state(updated)
+    return jsonify({"status": "ok"})
 
 
 @app.post("/score")
 def score_legacy():
-    return jsonify({"status": "ok", "message": "Not implemented in this stage"})
+    body = request.get_json(silent=True) or {}
+    team = body.get("team")
+    delta = int(body.get("delta", 1))
+    if team not in ("team1", "team2"):
+        return jsonify({"error": "team must be team1 or team2"}), 400
+    current = load_match_state()
+    score = current.get("score", {"team1": 0, "team2": 0})
+    new_score = max(0, int(score.get(team, 0)) + delta)
+    score[team] = new_score
+    current["score"] = score
+    save_match_state(current)
+    return jsonify({"status": "ok", "score": score})
 
 
 if __name__ == "__main__":

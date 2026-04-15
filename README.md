@@ -18,6 +18,11 @@
 - `docker-compose.db.yml`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/docker-compose.db.yml>
 - `supabase_setup.sql`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/supabase_setup.sql>
 - `api.py`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/api.py>
+- `app/src/main.tsx`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/app/src/main.tsx>
+- `app/src/AdminPanel.tsx`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/app/src/AdminPanel.tsx>
+- `app/src/Overlay.tsx`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/app/src/Overlay.tsx>
+- `app/src/useMatchState.ts`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/app/src/useMatchState.ts>
+- `app/src/supabase.ts`: <https://github.com/kalininlive/vk-tablo-v2/blob/master/app/src/supabase.ts>
 
 ## Требования к серверу
 
