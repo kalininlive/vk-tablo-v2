@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
-import { useOverlaySettingsRT, useOverlayState } from './useMatchState'
+import { useMediaLibrary, useOverlaySettingsRT, useOverlayState } from './useMatchState'
 import { Classic, Flat, Neon, Stadium } from './scoreboards'
 
 function formatMs(ms: number) {
@@ -41,15 +41,129 @@ function usePositionClass(position: string) {
 export default function Overlay() {
   const { state } = useOverlayState()
   const { settings } = useOverlaySettingsRT()
+  const { items: mediaItems } = useMediaLibrary()
   const now = useNow()
 
   const [goalVisible, setGoalVisible] = useState(false)
   const [cardVisible, setCardVisible] = useState(false)
 
+  const audioContextRef = useRef<AudioContext | null>(null)
+  const goalAudioRef = useRef<HTMLAudioElement | null>(null)
+  const backgroundAudioRef = useRef<HTMLAudioElement | null>(null)
+  const sequenceIndexesRef = useRef<Record<string, number>>({})
+  const prevPauseActiveRef = useRef(false)
+  const prevIntroActiveRef = useRef(false)
+
   useEffect(() => {
     document.body.classList.add('overlay-mode')
     return () => document.body.classList.remove('overlay-mode')
   }, [])
+
+  useEffect(() => {
+    const ctx = new AudioContext()
+    audioContextRef.current = ctx
+    const warmup = async () => {
+      try {
+        await ctx.resume()
+        const buf = ctx.createBuffer(1, 1, 22050)
+        const src = ctx.createBufferSource()
+        src.buffer = buf
+        src.connect(ctx.destination)
+        src.start()
+      } catch {
+        // noop
+      }
+    }
+    void warmup()
+    return () => {
+      goalAudioRef.current?.pause()
+      backgroundAudioRef.current?.pause()
+      void ctx.close()
+    }
+  }, [])
+
+  const mediaById = useMemo(() => {
+    const map: Record<number, string> = {}
+    for (const item of mediaItems) {
+      map[item.id] = item.data_url
+    }
+    return map
+  }, [mediaItems])
+
+  const resumeAudioEngine = async () => {
+    const ctx = audioContextRef.current
+    if (!ctx) {
+      return
+    }
+    try {
+      if (ctx.state !== 'running') {
+        await ctx.resume()
+      }
+      const buf = ctx.createBuffer(1, 1, 22050)
+      const src = ctx.createBufferSource()
+      src.buffer = buf
+      src.connect(ctx.destination)
+      src.start()
+    } catch {
+      // noop
+    }
+  }
+
+  const pickTrack = (
+    ids: number[],
+    mode: 'sequence' | 'random',
+    key: string
+  ) => {
+    const urls = ids.map((id) => mediaById[id]).filter((url): url is string => Boolean(url))
+    if (urls.length === 0) {
+      return null
+    }
+    if (mode === 'random') {
+      return urls[Math.floor(Math.random() * urls.length)]
+    }
+    const index = sequenceIndexesRef.current[key] || 0
+    const selected = urls[index % urls.length]
+    sequenceIndexesRef.current[key] = (index + 1) % urls.length
+    return selected
+  }
+
+  const playGoalSound = async (url: string | null) => {
+    if (!url || !url.startsWith('data:audio')) {
+      return
+    }
+    await resumeAudioEngine()
+    goalAudioRef.current?.pause()
+    const audio = new Audio(url)
+    audio.volume = 1
+    goalAudioRef.current = audio
+    try {
+      await audio.play()
+    } catch {
+      // noop
+    }
+  }
+
+  const playBackgroundSound = async (url: string | null) => {
+    if (!url || !url.startsWith('data:audio')) {
+      backgroundAudioRef.current?.pause()
+      backgroundAudioRef.current = null
+      return
+    }
+    await resumeAudioEngine()
+    if (backgroundAudioRef.current?.src === url && !backgroundAudioRef.current.paused) {
+      return
+    }
+    backgroundAudioRef.current?.pause()
+    const audio = new Audio(url)
+    audio.loop = true
+    audio.volume = 0.9
+    backgroundAudioRef.current = audio
+    try {
+      await audio.play()
+    } catch {
+      // noop
+    }
+  }
 
   useEffect(() => {
     if (!state.goalAnimation.goalId || !state.goalAnimation.animationsEnabled) {
@@ -61,6 +175,31 @@ export default function Overlay() {
   }, [state.goalAnimation.goalId, state.goalAnimation.animationsEnabled])
 
   useEffect(() => {
+    if (!state.goalAnimation.goalId || !state.goalAnimation.isActive) {
+      return
+    }
+    const isOurGoal = state.ourTeam ? state.ourTeam === state.goalAnimation.teamSide : true
+    const playlist = isOurGoal
+      ? state.goalAnimation.soundPlaylistIds
+      : state.goalAnimation.concededPlaylistIds
+    const url = pickTrack(
+      playlist,
+      state.goalAnimation.playlistMode,
+      isOurGoal ? 'goal-main' : 'goal-conceded'
+    )
+    void playGoalSound(url)
+  }, [
+    mediaById,
+    state.goalAnimation.concededPlaylistIds,
+    state.goalAnimation.goalId,
+    state.goalAnimation.isActive,
+    state.goalAnimation.playlistMode,
+    state.goalAnimation.soundPlaylistIds,
+    state.goalAnimation.teamSide,
+    state.ourTeam
+  ])
+
+  useEffect(() => {
     if (!state.cardEvent.cardId) {
       return
     }
@@ -68,6 +207,43 @@ export default function Overlay() {
     const id = window.setTimeout(() => setCardVisible(false), 4000)
     return () => window.clearTimeout(id)
   }, [state.cardEvent.cardId])
+
+  useEffect(() => {
+    const isPauseActive = state.pauseScreen.isActive
+    if (isPauseActive && !prevPauseActiveRef.current) {
+      const playlistUrl = pickTrack(
+        state.pauseScreenPlaylist.soundPlaylistIds,
+        state.pauseScreenPlaylist.playlistMode,
+        'pause-playlist'
+      )
+      const url = state.pauseScreen.audioUrl || playlistUrl
+      void playBackgroundSound(url)
+    }
+
+    if (!isPauseActive && prevPauseActiveRef.current) {
+      void playBackgroundSound(null)
+    }
+    prevPauseActiveRef.current = isPauseActive
+  }, [
+    mediaById,
+    state.pauseScreen.audioUrl,
+    state.pauseScreen.isActive,
+    state.pauseScreenPlaylist.playlistMode,
+    state.pauseScreenPlaylist.soundPlaylistIds
+  ])
+
+  useEffect(() => {
+    const isIntroActive = state.introScreen.isActive
+    if (isIntroActive && !prevIntroActiveRef.current) {
+      const url = pickTrack(
+        state.introScreen.soundPlaylistIds,
+        state.introScreen.playlistMode,
+        'intro-playlist'
+      )
+      void playGoalSound(url)
+    }
+    prevIntroActiveRef.current = isIntroActive
+  }, [mediaById, state.introScreen.isActive, state.introScreen.playlistMode, state.introScreen.soundPlaylistIds])
 
   const timerMs =
     state.timer.accumulatedTime + (state.timer.isRunning && state.timer.startTimestamp ? now - state.timer.startTimestamp : 0)
@@ -160,7 +336,6 @@ export default function Overlay() {
           <div className="absolute inset-0 flex items-center justify-center text-4xl font-black text-white drop-shadow-lg">
             {state.pauseScreen.text || 'ПАУЗА'}
           </div>
-          {state.pauseScreen.audioUrl ? <audio src={state.pauseScreen.audioUrl} autoPlay loop /> : null}
         </div>
       ) : null}
 
