@@ -168,43 +168,68 @@ export default function AdminPanel() {
 
       {tab === 'air' ? (
         <div className="grid gap-4 lg:grid-cols-3">
+          {/* Блок: Эфир */}
           <section className="rounded-xl border border-white/20 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Эфир</h2>
             <button
               disabled={stream.loading}
-              className={`rounded px-4 py-2 font-semibold ${stream.streaming ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}
+              className={`w-full rounded-xl py-3 font-bold text-base transition-colors ${stream.streaming ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}
               onClick={() => void (stream.streaming ? stream.stop() : stream.start())}
             >
-              {stream.streaming ? 'ОФФЛАЙН' : 'В ЭФИР'}
+              {stream.streaming ? '⏹ ОФФЛАЙН' : '▶ В ЭФИР'}
             </button>
-            <div className="mt-3 text-sm text-white/70">Статус: {stream.streaming ? 'в эфире' : 'остановлен'}</div>
+            <div className="mt-2 text-center text-sm text-white/50">{stream.streaming ? '🔴 в эфире' : '⚫ остановлен'}</div>
             {stream.message ? <div className="mt-2 text-sm text-amber-300">{stream.message}</div> : null}
 
-            <label className="mt-4 block text-sm">Наша команда</label>
+            <label className="mt-4 mb-1 block text-sm text-white/70">Наша команда</label>
             <select
-              className="mt-1 w-full rounded bg-white/10 px-3 py-2"
+              className="w-full rounded-lg bg-white/10 px-3 py-2"
               value={state.ourTeam || ''}
               onChange={(e) => void patchState({ ourTeam: (e.target.value || null) as any })}
             >
               <option value="">Не выбрано</option>
-              <option value="team1">Team 1</option>
-              <option value="team2">Team 2</option>
+              <option value="team1">{state.teams.team1.name}</option>
+              <option value="team2">{state.teams.team2.name}</option>
             </select>
           </section>
 
+          {/* Блок: Таймер и счёт */}
           <section className="rounded-xl border border-white/20 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Таймер и счёт</h2>
-            <div className="mb-2 text-3xl font-mono">{formatTime(timerMs)}</div>
-            <div className="mb-4 text-sm text-white/70">Тайм: {state.timer.half}</div>
-            <div className="mb-4 flex flex-wrap gap-2">
-              <button onClick={() => void toggleRun()} className="rounded bg-white/10 px-3 py-2">
-                {state.timer.isRunning ? 'Стоп таймер' : 'Старт таймер'}
+
+            {/* Таймер */}
+            {(() => {
+              const isOverTime = timerMs >= settings.timer_warning_min * 60 * 1000
+              return (
+                <div className={`mb-1 text-center text-5xl font-mono font-bold tracking-wider transition-colors ${isOverTime ? 'text-red-400 animate-pulse' : 'text-white'}`}>
+                  {formatTime(timerMs)}{isOverTime ? ' 🔥' : ''}
+                </div>
+              )
+            })()}
+
+            {/* Тайм */}
+            <div className="mb-3 flex gap-2">
+              <button
+                onClick={() => void patchState({ timer: { ...state.timer, half: 1 } })}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${state.timer.half === 1 ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70'}`}
+              >
+                1-й тайм
               </button>
               <button
-                onClick={() => void patchState({ timer: { ...state.timer, half: state.timer.half === 1 ? 2 : 1 } })}
-                className="rounded bg-white/10 px-3 py-2"
+                onClick={() => void patchState({ timer: { ...state.timer, half: 2 } })}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${state.timer.half === 2 ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70'}`}
               >
-                Сменить тайм
+                2-й тайм
+              </button>
+            </div>
+
+            {/* Старт/Стоп + Сброс */}
+            <div className="mb-3 flex gap-2">
+              <button
+                onClick={() => void toggleRun()}
+                className={`flex-1 rounded-lg py-3 font-bold text-base transition-colors ${state.timer.isRunning ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}
+              >
+                {state.timer.isRunning ? '⏸ СТОП' : '▶ СТАРТ'}
               </button>
               <button
                 onClick={() => {
@@ -215,19 +240,33 @@ export default function AdminPanel() {
                     })
                   }
                 }}
-                className="rounded bg-white/10 px-3 py-2"
+                className="rounded-lg bg-white/10 px-4 py-3 text-sm text-white/70"
               >
-                Сброс матча
+                Сброс
               </button>
+            </div>
+
+            {/* Пресеты времени */}
+            <div className="mb-4 flex flex-wrap gap-1.5">
+              {([1, 30, 35, 40, 45] as const).map((min) => (
+                <button
+                  key={min}
+                  onClick={() => void patchState({ timer: { ...state.timer, isRunning: false, startTimestamp: null, accumulatedTime: min * 60 * 1000 } })}
+                  className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/20 transition-colors"
+                >
+                  {min} мин
+                </button>
+              ))}
             </div>
 
             <ScoreRow name={state.teams.team1.name} score={state.score.team1} onPlus={() => void scoreDelta('team1', 1)} onMinus={() => void scoreDelta('team1', -1)} />
             <ScoreRow name={state.teams.team2.name} score={state.score.team2} onPlus={() => void scoreDelta('team2', 1)} onMinus={() => void scoreDelta('team2', -1)} />
           </section>
 
+          {/* Блок: Быстрые эффекты */}
           <section className="rounded-xl border border-white/20 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Быстрые эффекты</h2>
-            <div className="space-y-2 text-sm">
+            <div className="space-y-2">
               <Toggle label="Пауза" value={state.pauseScreen.isActive} onChange={(value) => void patchState({ pauseScreen: { ...state.pauseScreen, isActive: value } })} />
               <Toggle label="Нижний баннер" value={state.bottomBanner.isActive} onChange={(value) => void patchState({ bottomBanner: { ...state.bottomBanner, isActive: value } })} />
               <Toggle label="Субтитры" value={state.subtitles.isActive} onChange={(value) => void patchState({ subtitles: { ...state.subtitles, isActive: value } })} />
@@ -241,39 +280,41 @@ export default function AdminPanel() {
               <Toggle label="Логотип спонсора" value={state.sponsorLogo.isActive} onChange={(value) => void patchState({ sponsorLogo: { ...state.sponsorLogo, isActive: value } })} />
             </div>
 
+            {/* Карточки по командам */}
             <div className="mt-4">
-              <label className="mb-1 block text-sm">Карточка игрока</label>
-              <div className="flex gap-2">
-                <input
-                  className="w-full rounded bg-white/10 px-3 py-2"
-                  placeholder="Имя игрока"
-                  value={state.cardEvent.playerName}
-                  onChange={(e) => void patchState({ cardEvent: { ...state.cardEvent, playerName: e.target.value } })}
-                />
-                <select
-                  className="rounded bg-white/10 px-2"
-                  value={state.cardEvent.cardType}
-                  onChange={(e) => void patchState({ cardEvent: { ...state.cardEvent, cardType: e.target.value as any } })}
-                >
-                  <option value="yellow">Yellow</option>
-                  <option value="red">Red</option>
-                </select>
-              </div>
-              <div className="mt-2 flex gap-2">
-                <button
-                  className="rounded bg-amber-400 px-3 py-1 text-black"
-                  onClick={() =>
-                    void patchState({
-                      cardEvent: { ...state.cardEvent, isActive: true, cardId: crypto.randomUUID() }
-                    })
-                  }
-                >
-                  Показать
-                </button>
-                <button className="rounded bg-white/10 px-3 py-1" onClick={() => void patchState({ cardEvent: { ...state.cardEvent, isActive: false } })}>
-                  Скрыть
-                </button>
-              </div>
+              <div className="mb-2 text-sm font-semibold text-white/70">Карточки</div>
+              <input
+                className="mb-3 w-full rounded-lg bg-white/10 px-3 py-2 text-sm"
+                placeholder="Имя игрока"
+                value={state.cardEvent.playerName}
+                onChange={(e) => void patchState({ cardEvent: { ...state.cardEvent, playerName: e.target.value } })}
+              />
+              {(['team1', 'team2'] as const).map((team) => (
+                <div key={team} className="mb-2 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+                  <span className="flex-1 truncate text-sm">{state.teams[team].name}</span>
+                  <button
+                    type="button"
+                    className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-black"
+                    onClick={() => void patchState({ cardEvent: { ...state.cardEvent, isActive: true, cardId: crypto.randomUUID(), teamSide: team, cardType: 'yellow' } })}
+                  >
+                    Ж
+                  </button>
+                  <button
+                    type="button"
+                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white"
+                    onClick={() => void patchState({ cardEvent: { ...state.cardEvent, isActive: true, cardId: crypto.randomUUID(), teamSide: team, cardType: 'red' } })}
+                  >
+                    К
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                className="mt-1 w-full rounded-lg bg-white/10 py-2 text-sm text-white/60"
+                onClick={() => void patchState({ cardEvent: { ...state.cardEvent, isActive: false } })}
+              >
+                Скрыть карточку
+              </button>
             </div>
           </section>
         </div>
@@ -290,10 +331,16 @@ export default function AdminPanel() {
 
 function Toggle({ label, value, onChange }: { label: string; value: boolean; onChange: (value: boolean) => void }) {
   return (
-    <label className="flex items-center justify-between rounded bg-white/5 px-3 py-2">
-      <span>{label}</span>
-      <input type="checkbox" checked={value} onChange={(e) => onChange(e.target.checked)} />
-    </label>
+    <button
+      type="button"
+      onClick={() => onChange(!value)}
+      className={`flex w-full items-center justify-between rounded-xl px-4 py-3 transition-all ${value ? 'bg-emerald-500/15 border border-emerald-500/40' : 'bg-white/5 border border-white/10'}`}
+    >
+      <span className={`font-medium transition-colors ${value ? 'text-emerald-300' : 'text-white/70'}`}>{label}</span>
+      <div className={`relative h-6 w-11 rounded-full transition-colors duration-200 ${value ? 'bg-emerald-500' : 'bg-white/20'}`}>
+        <div className={`absolute top-0.5 h-5 w-5 rounded-full bg-white shadow-md transition-transform duration-200 ${value ? 'translate-x-5' : 'translate-x-0.5'}`} />
+      </div>
+    </button>
   )
 }
 
