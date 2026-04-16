@@ -1,5 +1,6 @@
 .vps.env
 PROJECT_SPEC.md
+CLAUDE.md
 memory/
 tasks.md
 .env
