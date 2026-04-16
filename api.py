@@ -4,13 +4,14 @@ import json
 import os
 import signal
 import subprocess
+import threading
 import time
 from typing import Any, Dict, Optional
 
 import psycopg2
 from flask import Flask, jsonify, request
 
-app = Flask(__name__)
+app = Flask(__name__, threaded=True)
 
 API_PORT = 5000
 API_SECRET = os.getenv("CONTROL_SECRET", "")
@@ -19,6 +20,7 @@ OBS_HOME = "/root/.config/obs-studio"
 
 obs_process: Optional[subprocess.Popen] = None
 xvfb_process: Optional[subprocess.Popen] = None
+_stream_lock = threading.Lock()
 
 
 def db_conn():
@@ -250,64 +252,66 @@ def status():
 @app.post("/start")
 def start_stream():
     global xvfb_process, obs_process
-    if is_alive(obs_process):
-        return jsonify({"status": "ok", "streaming": True})
+    with _stream_lock:
+        if is_alive(obs_process):
+            return jsonify({"status": "ok", "streaming": True})
 
-    channel = read_active_channel()
-    if not channel:
-        return jsonify({"error": "Нет активного VK-канала"}), 400
+        channel = read_active_channel()
+        if not channel:
+            return jsonify({"error": "Нет активного VK-канала"}), 400
 
-    ensure_obs_files(channel)
-    clear_safe_mode_flag()
+        ensure_obs_files(channel)
+        clear_safe_mode_flag()
 
-    if not is_alive(xvfb_process):
-        xvfb_process = subprocess.Popen(
-            ["Xvfb", XVFB_DISPLAY, "-screen", "0", "1920x1080x24", "-nocursor"],
+        if not is_alive(xvfb_process):
+            xvfb_process = subprocess.Popen(
+                ["Xvfb", XVFB_DISPLAY, "-screen", "0", "1920x1080x24", "-nocursor"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            time.sleep(2)
+
+        env = os.environ.copy()
+        env["DISPLAY"] = XVFB_DISPLAY
+        env["LIBGL_ALWAYS_SOFTWARE"] = "1"
+        obs_process = subprocess.Popen(
+            [
+                "obs",
+                "--startstreaming",
+                "--minimize-to-tray",
+                "--collection",
+                "vk-stream",
+                "--profile",
+                "vk-stream",
+            ],
+            env=env,
             stdout=subprocess.DEVNULL,
             stderr=subprocess.DEVNULL,
         )
-        time.sleep(2)
-
-    env = os.environ.copy()
-    env["DISPLAY"] = XVFB_DISPLAY
-    env["LIBGL_ALWAYS_SOFTWARE"] = "1"
-    obs_process = subprocess.Popen(
-        [
-            "obs",
-            "--startstreaming",
-            "--minimize-to-tray",
-            "--collection",
-            "vk-stream",
-            "--profile",
-            "vk-stream",
-        ],
-        env=env,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
-    return jsonify({"status": "ok", "streaming": True})
+        return jsonify({"status": "ok", "streaming": True})
 
 
 @app.post("/stop")
 def stop_stream():
     global xvfb_process, obs_process
-    if is_alive(obs_process):
-        obs_process.terminate()
-        try:
-            obs_process.wait(timeout=10)
-        except subprocess.TimeoutExpired:
-            obs_process.kill()
-    obs_process = None
+    with _stream_lock:
+        if is_alive(obs_process):
+            obs_process.terminate()
+            try:
+                obs_process.wait(timeout=10)
+            except subprocess.TimeoutExpired:
+                obs_process.kill()
+        obs_process = None
 
-    if is_alive(xvfb_process):
-        xvfb_process.send_signal(signal.SIGTERM)
-        try:
-            xvfb_process.wait(timeout=5)
-        except subprocess.TimeoutExpired:
-            xvfb_process.kill()
-    xvfb_process = None
+        if is_alive(xvfb_process):
+            xvfb_process.send_signal(signal.SIGTERM)
+            try:
+                xvfb_process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                xvfb_process.kill()
+        xvfb_process = None
 
-    return jsonify({"status": "ok", "streaming": False})
+        return jsonify({"status": "ok", "streaming": False})
 
 
 @app.post("/overlay/update")

@@ -52,6 +52,7 @@ export default function Overlay() {
   const backgroundAudioRef = useRef<HTMLAudioElement | null>(null)
   const sequenceIndexesRef = useRef<Record<string, number>>({})
   const prevPauseActiveRef = useRef(false)
+  const prevPauseSignatureRef = useRef('')
   const prevIntroActiveRef = useRef(false)
 
   useEffect(() => {
@@ -77,7 +78,10 @@ export default function Overlay() {
     void warmup()
     return () => {
       goalAudioRef.current?.pause()
+      goalAudioRef.current = null
       backgroundAudioRef.current?.pause()
+      backgroundAudioRef.current = null
+      audioContextRef.current = null
       void ctx.close()
     }
   }, [])
@@ -89,6 +93,11 @@ export default function Overlay() {
     }
     return map
   }, [mediaItems])
+
+  const pausePlaylistSources = useMemo(
+    () => state.pauseScreenPlaylist.soundPlaylistIds.map((id) => mediaById[id] || '').join('|'),
+    [mediaById, state.pauseScreenPlaylist.soundPlaylistIds]
+  )
 
   const resumeAudioEngine = async () => {
     const ctx = audioContextRef.current
@@ -166,7 +175,9 @@ export default function Overlay() {
   }
 
   useEffect(() => {
-    if (!state.goalAnimation.goalId || !state.goalAnimation.animationsEnabled) {
+    if (!state.goalAnimation.goalId) return
+    if (!state.goalAnimation.animationsEnabled) {
+      setGoalVisible(false)
       return
     }
     setGoalVisible(true)
@@ -210,7 +221,15 @@ export default function Overlay() {
 
   useEffect(() => {
     const isPauseActive = state.pauseScreen.isActive
-    if (isPauseActive && !prevPauseActiveRef.current) {
+    const signature = [
+      isPauseActive ? '1' : '0',
+      state.pauseScreen.audioUrl,
+      state.pauseScreenPlaylist.playlistMode,
+      state.pauseScreenPlaylist.soundPlaylistIds.join(','),
+      pausePlaylistSources
+    ].join('::')
+
+    if (isPauseActive && (!prevPauseActiveRef.current || prevPauseSignatureRef.current !== signature)) {
       const playlistUrl = pickTrack(
         state.pauseScreenPlaylist.soundPlaylistIds,
         state.pauseScreenPlaylist.playlistMode,
@@ -224,8 +243,9 @@ export default function Overlay() {
       void playBackgroundSound(null)
     }
     prevPauseActiveRef.current = isPauseActive
+    prevPauseSignatureRef.current = signature
   }, [
-    mediaById,
+    pausePlaylistSources,
     state.pauseScreen.audioUrl,
     state.pauseScreen.isActive,
     state.pauseScreenPlaylist.playlistMode,
@@ -266,9 +286,10 @@ export default function Overlay() {
 
   const introCount = useMemo(() => {
     if (!state.introScreen.isActive || !state.introScreen.countdown) return null
-    const elapsed = Math.floor((timerMs || 0) / 1000)
+    if (!state.introScreen.startedAt) return state.introScreen.countdown
+    const elapsed = Math.floor((now - state.introScreen.startedAt) / 1000)
     return Math.max(0, state.introScreen.countdown - elapsed)
-  }, [state.introScreen.countdown, state.introScreen.isActive, timerMs])
+  }, [state.introScreen.countdown, state.introScreen.isActive, state.introScreen.startedAt, now])
 
   return (
     <div className="relative h-screen w-screen">

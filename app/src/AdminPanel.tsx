@@ -108,7 +108,7 @@ export default function AdminPanel() {
       patch.goalAnimation = {
         ...state.goalAnimation,
         isActive: true,
-        goalId: Date.now(),
+        goalId: crypto.randomUUID(),
         teamSide: team,
         teamName: state.teams[team].name,
         newScore
@@ -231,7 +231,13 @@ export default function AdminPanel() {
               <Toggle label="Пауза" value={state.pauseScreen.isActive} onChange={(value) => void patchState({ pauseScreen: { ...state.pauseScreen, isActive: value } })} />
               <Toggle label="Нижний баннер" value={state.bottomBanner.isActive} onChange={(value) => void patchState({ bottomBanner: { ...state.bottomBanner, isActive: value } })} />
               <Toggle label="Субтитры" value={state.subtitles.isActive} onChange={(value) => void patchState({ subtitles: { ...state.subtitles, isActive: value } })} />
-              <Toggle label="Интро" value={state.introScreen.isActive} onChange={(value) => void patchState({ introScreen: { ...state.introScreen, isActive: value } })} />
+              <Toggle
+                label="Интро"
+                value={state.introScreen.isActive}
+                onChange={(value) =>
+                  void patchState({ introScreen: { ...state.introScreen, isActive: value, startedAt: value ? Date.now() : null } })
+                }
+              />
               <Toggle label="Логотип спонсора" value={state.sponsorLogo.isActive} onChange={(value) => void patchState({ sponsorLogo: { ...state.sponsorLogo, isActive: value } })} />
             </div>
 
@@ -258,7 +264,7 @@ export default function AdminPanel() {
                   className="rounded bg-amber-400 px-3 py-1 text-black"
                   onClick={() =>
                     void patchState({
-                      cardEvent: { ...state.cardEvent, isActive: true, cardId: Date.now() }
+                      cardEvent: { ...state.cardEvent, isActive: true, cardId: crypto.randomUUID() }
                     })
                   }
                 >
@@ -598,8 +604,22 @@ function FxTab({ state, patchState }: any) {
           <input className="w-full rounded bg-white/10 px-3 py-2" value={state.pauseScreenPlaylist.soundPlaylistIds.join(',')} onChange={(e) => void patchState({ pauseScreenPlaylist: { ...state.pauseScreenPlaylist, soundPlaylistIds: parseIds(e.target.value) } })} />
         </label>
         <label className="block">
-          <span className="mb-1 block text-sm">Playlist mode</span>
+          <span className="mb-1 block text-sm">Режим плейлиста: Голы</span>
           <select className="w-full rounded bg-white/10 px-3 py-2" value={state.goalAnimation.playlistMode} onChange={(e) => void patchState({ goalAnimation: { ...state.goalAnimation, playlistMode: e.target.value } })}>
+            <option value="sequence">sequence</option>
+            <option value="random">random</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm">Режим плейлиста: Интро</span>
+          <select className="w-full rounded bg-white/10 px-3 py-2" value={state.introScreen.playlistMode} onChange={(e) => void patchState({ introScreen: { ...state.introScreen, playlistMode: e.target.value } })}>
+            <option value="sequence">sequence</option>
+            <option value="random">random</option>
+          </select>
+        </label>
+        <label className="block">
+          <span className="mb-1 block text-sm">Режим плейлиста: Пауза</span>
+          <select className="w-full rounded bg-white/10 px-3 py-2" value={state.pauseScreenPlaylist.playlistMode} onChange={(e) => void patchState({ pauseScreenPlaylist: { ...state.pauseScreenPlaylist, playlistMode: e.target.value } })}>
             <option value="sequence">sequence</option>
             <option value="random">random</option>
           </select>

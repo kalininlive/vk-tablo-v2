@@ -81,6 +81,7 @@ export function useMatchState() {
       .single()
     if (dbError) {
       setError(dbError.message)
+      setLoading(false)
       return
     }
     setState((data?.state as MatchState) || defaultMatchState)
@@ -96,10 +97,12 @@ export function useMatchState() {
 
   const patchState = useCallback(
     async (patch: PartialDeep<MatchState>) => {
+      const previous = state
       const merged = deepMerge(state, patch)
       setState(merged)
       const { error: dbError } = await supabase.from('football_match_state').update({ state: merged }).eq('id', 1)
       if (dbError) {
+        setState(previous)
         setError(dbError.message)
       }
     },
@@ -182,8 +185,16 @@ export function useVKChannels() {
   }, [load])
 
   const setActive = useCallback(async (id: number) => {
-    await supabase.from('vk_channels').update({ is_active: false }).neq('id', -1)
-    await supabase.from('vk_channels').update({ is_active: true }).eq('id', id)
+    const { error: e1 } = await supabase.from('vk_channels').update({ is_active: false }).neq('id', -1)
+    if (e1) {
+      await load()
+      return
+    }
+    const { error: e2 } = await supabase.from('vk_channels').update({ is_active: true }).eq('id', id)
+    if (e2) {
+      await load()
+      return
+    }
     await load()
   }, [load])
 

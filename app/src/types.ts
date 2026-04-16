@@ -43,7 +43,7 @@ export interface MatchState {
   }
   goalAnimation: {
     isActive: boolean
-    goalId: number
+    goalId: string
     teamSide: TeamSide
     teamName: string
     newScore: {
@@ -58,13 +58,14 @@ export interface MatchState {
   ourTeam: TeamSide | null
   cardEvent: {
     isActive: boolean
-    cardId: number
+    cardId: string
     teamSide: TeamSide
     cardType: 'yellow' | 'red'
     playerName: string
   }
   introScreen: {
     isActive: boolean
+    startedAt: number | null
     countdown: number | null
     soundPlaylistIds: number[]
     playlistMode: 'sequence' | 'random'
@@ -140,7 +141,7 @@ export const defaultMatchState: MatchState = {
   subtitles: { isActive: false, text: '', size: 'M' },
   goalAnimation: {
     isActive: false,
-    goalId: 0,
+    goalId: '',
     teamSide: 'team1',
     teamName: '',
     newScore: { team1: 0, team2: 0 },
@@ -150,8 +151,8 @@ export const defaultMatchState: MatchState = {
     animationsEnabled: true
   },
   ourTeam: null,
-  cardEvent: { isActive: false, cardId: 0, teamSide: 'team1', cardType: 'yellow', playerName: '' },
-  introScreen: { isActive: false, countdown: null, soundPlaylistIds: [], playlistMode: 'sequence' },
+  cardEvent: { isActive: false, cardId: '', teamSide: 'team1', cardType: 'yellow', playerName: '' },
+  introScreen: { isActive: false, startedAt: null, countdown: null, soundPlaylistIds: [], playlistMode: 'sequence' },
   pauseScreenPlaylist: { soundPlaylistIds: [], playlistMode: 'sequence' },
   sponsorLogo: { isActive: false, imageUrl: '', size: 80 },
   streamTitle: ''
