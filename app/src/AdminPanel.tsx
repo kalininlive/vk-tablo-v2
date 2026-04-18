@@ -29,7 +29,7 @@ function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onCon
       <div className="w-full max-w-sm rounded-xl border border-white/20 bg-black/80 p-5">
         <div className="mb-5 text-center text-lg">{message}</div>
         <div className="flex gap-3">
-          <button onClick={onCancel} className="min-h-[48px] flex-1 rounded-lg bg-white/10">Отмена</button>
+          <button onClick={onCancel} className="min-h-[48px] flex-1 rounded-lg bg-gray-800 border border-white/20 text-white">Отмена</button>
           <button onClick={onConfirm} className="min-h-[48px] flex-1 rounded-lg bg-red-500 font-semibold text-white">Сброс</button>
         </div>
       </div>
@@ -87,8 +87,8 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
       <h1 className="mb-4 text-2xl font-bold">VK Tablo v2</h1>
       <p className="mb-6 text-sm text-white/70">Вход в админ-панель</p>
       <form className="space-y-3" onSubmit={submit}>
-        <input value={username} onChange={(e) => setUsername(e.target.value)} className="min-h-[48px] w-full rounded bg-white/10 px-3 py-3" placeholder="Логин" />
-        <input value={password} onChange={(e) => setPassword(e.target.value)} className="min-h-[48px] w-full rounded bg-white/10 px-3 py-3" placeholder="Пароль" type="password" />
+        <input value={username} onChange={(e) => setUsername(e.target.value)} className="min-h-[48px] w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-3" placeholder="Логин" />
+        <input value={password} onChange={(e) => setPassword(e.target.value)} className="min-h-[48px] w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-3" placeholder="Пароль" type="password" />
         <button disabled={loading} className="min-h-[48px] w-full rounded bg-emerald-500 px-3 py-3 font-semibold text-black">
           {loading ? 'Проверка...' : 'Войти'}
         </button>
@@ -174,7 +174,7 @@ export default function AdminPanel() {
         <div className="mb-4 flex flex-wrap items-center justify-between gap-2 md:mb-4">
           <h1 className="text-xl font-bold md:text-2xl">Пульт трансляции</h1>
           <button
-            className="rounded bg-white/10 px-3 py-2 text-sm"
+            className="rounded bg-gray-800 border border-white/20 text-white px-3 py-2 text-sm"
             onClick={() => {
               localStorage.removeItem('vk_auth')
               setAuth(false)
@@ -188,7 +188,7 @@ export default function AdminPanel() {
           {tabs.map((entry) => (
           <button
             key={entry.id}
-            className={`flex-1 rounded px-2 py-2 text-xs md:flex-none md:px-3 md:py-2 md:text-sm ${tab === entry.id ? 'bg-emerald-500 text-black' : 'bg-white/10'}`}
+            className={`flex-1 rounded px-2 py-2 text-xs md:flex-none md:px-3 md:py-2 md:text-sm ${tab === entry.id ? 'bg-emerald-500 text-black' : 'bg-gray-800 border border-white/20 text-white'}`}
             onClick={() => setTab(entry.id)}
           >
             {entry.label}
@@ -228,13 +228,13 @@ export default function AdminPanel() {
 
             <label className="mt-4 mb-1 block text-sm text-white/70">Наша команда</label>
             <select
-              className="min-h-[48px] w-full rounded-lg bg-white/10 px-3 py-2"
+              className="min-h-[48px] w-full rounded-lg bg-gray-800 border border-white/20 text-white px-3 py-2"
               value={state.ourTeam || ''}
               onChange={(e) => void patchState({ ourTeam: (e.target.value || null) as any })}
             >
-              <option value="">Не выбрано</option>
-              <option value="team1">{state.teams.team1.name}</option>
-              <option value="team2">{state.teams.team2.name}</option>
+              <option className="bg-gray-800 text-white" value="">Не выбрано</option>
+              <option className="bg-gray-800 text-white" value="team1">{state.teams.team1.name}</option>
+              <option className="bg-gray-800 text-white" value="team2">{state.teams.team2.name}</option>
             </select>
           </section>
 
@@ -256,13 +256,13 @@ export default function AdminPanel() {
             <div className="mb-3 flex gap-2">
               <button
                 onClick={() => void patchState({ timer: { ...state.timer, half: 1 } })}
-                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${state.timer.half === 1 ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70'}`}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${state.timer.half === 1 ? 'bg-emerald-500 text-black' : 'bg-gray-800 border border-white/20 text-white text-white/70'}`}
               >
                 1-й тайм
               </button>
               <button
                 onClick={() => void patchState({ timer: { ...state.timer, half: 2 } })}
-                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${state.timer.half === 2 ? 'bg-emerald-500 text-black' : 'bg-white/10 text-white/70'}`}
+                className={`flex-1 rounded-lg py-2 text-sm font-semibold transition-colors ${state.timer.half === 2 ? 'bg-emerald-500 text-black' : 'bg-gray-800 border border-white/20 text-white text-white/70'}`}
               >
                 2-й тайм
               </button>
@@ -278,7 +278,7 @@ export default function AdminPanel() {
               </button>
               <button
                 onClick={() => setConfirmReset(true)}
-                className="rounded-lg bg-white/10 px-4 py-3 text-sm text-white/70"
+                className="rounded-lg bg-gray-800 border border-white/20 text-white px-4 py-3 text-sm text-white/70"
               >
                 Сброс
               </button>
@@ -290,7 +290,7 @@ export default function AdminPanel() {
                 <button
                   key={min}
                   onClick={() => void patchState({ timer: { ...state.timer, isRunning: false, startTimestamp: null, accumulatedTime: min * 60 * 1000 } })}
-                  className="rounded-lg bg-white/10 px-3 py-1.5 text-xs text-white/70 hover:bg-white/20 transition-colors"
+                  className="rounded-lg bg-gray-800 border border-white/20 text-white px-3 py-1.5 text-xs text-white/70 hover:bg-white/20 transition-colors"
                 >
                   {min} мин
                 </button>
@@ -322,7 +322,7 @@ export default function AdminPanel() {
             <div className="mt-4">
               <div className="mb-2 text-sm font-semibold text-white/70">Карточки</div>
               <input
-                className="min-h-[48px] mb-3 w-full rounded-lg bg-white/10 px-3 py-3 text-sm"
+                className="min-h-[48px] mb-3 w-full rounded-lg bg-gray-800 border border-white/20 text-white px-3 py-3 text-sm"
                 placeholder="Имя игрока"
                 value={state.cardEvent.playerName}
                 onChange={(e) => void patchState({ cardEvent: { ...state.cardEvent, playerName: e.target.value } })}
@@ -348,7 +348,7 @@ export default function AdminPanel() {
               ))}
               <button
                 type="button"
-                className="min-h-[48px] mt-1 w-full rounded-lg bg-white/10 py-2 text-sm text-white/60"
+                className="min-h-[48px] mt-1 w-full rounded-lg bg-gray-800 border border-white/20 text-white py-2 text-sm text-white/60"
                 onClick={() => void patchState({ cardEvent: { ...state.cardEvent, isActive: false } })}
               >
                 Скрыть карточку
@@ -405,11 +405,11 @@ function ScoreRow({ name, score, onPlus, onMinus }: { name: string; score: numbe
     <div className="mb-2 flex min-h-[48px] items-center justify-between rounded bg-white/5 px-3 last:mb-0">
       <div className="truncate">{name}</div>
       <div className="flex items-center gap-2">
-        <button onClick={onMinus} className="min-h-[40px] min-w-[40px] rounded-lg bg-white/10 px-3">
+        <button onClick={onMinus} className="min-h-[40px] min-w-[40px] rounded-lg bg-gray-800 border border-white/20 text-white px-3">
           -1
         </button>
         <span className="w-8 text-center text-xl font-bold">{score}</span>
-        <button onClick={onPlus} className="min-h-[40px] min-w-[40px] rounded-lg bg-white/10 px-3">
+        <button onClick={onPlus} className="min-h-[40px] min-w-[40px] rounded-lg bg-gray-800 border border-white/20 text-white px-3">
           +1
         </button>
       </div>
@@ -459,42 +459,42 @@ function MatchTab({ state, patchState, channels }: any) {
       <section className="rounded-xl border border-white/20 bg-black/30 p-4">
         <h2 className="mb-3 text-lg font-semibold">Контент</h2>
         <label className="mb-1 block text-sm">Заголовок трансляции</label>
-        <input className="mb-3 w-full rounded bg-white/10 px-3 py-2" value={state.streamTitle} onChange={(e) => void patchState({ streamTitle: e.target.value })} />
+        <input className="mb-3 w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.streamTitle} onChange={(e) => void patchState({ streamTitle: e.target.value })} />
 
         <label className="mb-1 block text-sm">Нижний баннер текст</label>
-        <input className="mb-2 w-full rounded bg-white/10 px-3 py-2" value={state.bottomBanner.text} onChange={(e) => void patchState({ bottomBanner: { ...state.bottomBanner, text: e.target.value } })} />
+        <input className="mb-2 w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.bottomBanner.text} onChange={(e) => void patchState({ bottomBanner: { ...state.bottomBanner, text: e.target.value } })} />
         <div className="mb-2 flex gap-2">
-          <select className="rounded bg-white/10 px-2 py-1" value={state.bottomBanner.mode} onChange={(e) => void patchState({ bottomBanner: { ...state.bottomBanner, mode: e.target.value as any } })}>
-            <option value="scroll">Scroll</option>
-            <option value="image">Image</option>
+          <select className="rounded bg-gray-800 border border-white/20 text-white px-2 py-1" value={state.bottomBanner.mode} onChange={(e) => void patchState({ bottomBanner: { ...state.bottomBanner, mode: e.target.value as any } })}>
+            <option className="bg-gray-800 text-white" value="scroll">Scroll</option>
+            <option className="bg-gray-800 text-white" value="image">Image</option>
           </select>
-          <input type="number" className="w-24 rounded bg-white/10 px-2" value={state.bottomBanner.speed} onChange={(e) => void patchState({ bottomBanner: { ...state.bottomBanner, speed: Number(e.target.value) || 30 } })} />
-          <select className="rounded bg-white/10 px-2 py-1" value={state.bottomBanner.size} onChange={(e) => void patchState({ bottomBanner: { ...state.bottomBanner, size: e.target.value as any } })}>
-            <option value="S">S</option>
-            <option value="M">M</option>
-            <option value="L">L</option>
+          <input type="number" className="w-24 rounded bg-gray-800 border border-white/20 text-white px-2" value={state.bottomBanner.speed} onChange={(e) => void patchState({ bottomBanner: { ...state.bottomBanner, speed: Number(e.target.value) || 30 } })} />
+          <select className="rounded bg-gray-800 border border-white/20 text-white px-2 py-1" value={state.bottomBanner.size} onChange={(e) => void patchState({ bottomBanner: { ...state.bottomBanner, size: e.target.value as any } })}>
+            <option className="bg-gray-800 text-white" value="S">S</option>
+            <option className="bg-gray-800 text-white" value="M">M</option>
+            <option className="bg-gray-800 text-white" value="L">L</option>
           </select>
         </div>
-        <input type="file" className="mb-3 w-full rounded bg-white/10 px-2 py-1" onChange={(e) => void uploadBottomImage(e.target.files?.[0] || null)} />
+        <input type="file" className="mb-3 w-full rounded bg-gray-800 border border-white/20 text-white px-2 py-1" onChange={(e) => void uploadBottomImage(e.target.files?.[0] || null)} />
 
         <label className="mb-1 block text-sm">Субтитры</label>
-        <input className="mb-2 w-full rounded bg-white/10 px-3 py-2" value={state.subtitles.text} onChange={(e) => void patchState({ subtitles: { ...state.subtitles, text: e.target.value } })} />
+        <input className="mb-2 w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.subtitles.text} onChange={(e) => void patchState({ subtitles: { ...state.subtitles, text: e.target.value } })} />
 
         <label className="mb-1 block text-sm">Заставка паузы (медиа + аудио)</label>
-        <input type="file" className="mb-2 w-full rounded bg-white/10 px-2 py-1" onChange={(e) => void uploadPauseMedia(e.target.files?.[0] || null)} />
-        <input type="file" className="mb-2 w-full rounded bg-white/10 px-2 py-1" onChange={(e) => void uploadPauseAudio(e.target.files?.[0] || null)} />
-        <input className="mb-2 w-full rounded bg-white/10 px-3 py-2" value={state.pauseScreen.text} onChange={(e) => void patchState({ pauseScreen: { ...state.pauseScreen, text: e.target.value } })} placeholder="Текст паузы" />
+        <input type="file" className="mb-2 w-full rounded bg-gray-800 border border-white/20 text-white px-2 py-1" onChange={(e) => void uploadPauseMedia(e.target.files?.[0] || null)} />
+        <input type="file" className="mb-2 w-full rounded bg-gray-800 border border-white/20 text-white px-2 py-1" onChange={(e) => void uploadPauseAudio(e.target.files?.[0] || null)} />
+        <input className="mb-2 w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.pauseScreen.text} onChange={(e) => void patchState({ pauseScreen: { ...state.pauseScreen, text: e.target.value } })} placeholder="Текст паузы" />
 
         <label className="mb-1 block text-sm">Интро countdown</label>
-        <input type="number" className="mb-2 w-24 rounded bg-white/10 px-3 py-2" value={state.introScreen.countdown || 10} onChange={(e) => void patchState({ introScreen: { ...state.introScreen, countdown: Number(e.target.value) || 10 } })} />
+        <input type="number" className="mb-2 w-24 rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.introScreen.countdown || 10} onChange={(e) => void patchState({ introScreen: { ...state.introScreen, countdown: Number(e.target.value) || 10 } })} />
 
         <label className="mb-1 block text-sm">Логотип спонсора</label>
-        <input type="file" className="mb-2 w-full rounded bg-white/10 px-2 py-1" onChange={(e) => void uploadSponsor(e.target.files?.[0] || null)} />
+        <input type="file" className="mb-2 w-full rounded bg-gray-800 border border-white/20 text-white px-2 py-1" onChange={(e) => void uploadSponsor(e.target.files?.[0] || null)} />
         <input type="range" min={40} max={200} value={state.sponsorLogo.size} onChange={(e) => void patchState({ sponsorLogo: { ...state.sponsorLogo, size: Number(e.target.value) } })} className="w-full" />
 
         <label className="mt-3 mb-1 block text-sm">Активный VK канал</label>
         <select
-          className="w-full rounded bg-white/10 px-3 py-2"
+          className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2"
           value={channels.find((it: any) => it.is_active)?.id || ''}
           onChange={(e) => {
             const id = Number(e.target.value)
@@ -506,7 +506,7 @@ function MatchTab({ state, patchState, channels }: any) {
             }
           }}
         >
-          <option value="">Выбери в вкладке Доступ</option>
+          <option className="bg-gray-800 text-white" value="">Выбери в вкладке Доступ</option>
           {channels.map((channel: any) => (
             <option key={channel.id} value={channel.id}>{channel.name}</option>
           ))}
@@ -522,12 +522,12 @@ function TeamEditor({ teamKey, state, patchState, onUpload }: any) {
     <div className="mb-4 rounded-lg bg-white/5 p-3 last:mb-0">
       <div className="mb-2 font-semibold">{teamKey === 'team1' ? 'Команда 1' : 'Команда 2'}</div>
       <div className="grid gap-2 md:grid-cols-2">
-        <input className="rounded bg-white/10 px-3 py-2" value={team.name} placeholder="Название" onChange={(e) => void patchState({ teams: { ...state.teams, [teamKey]: { ...team, name: e.target.value } } })} />
-        <input className="rounded bg-white/10 px-3 py-2" value={team.city} placeholder="Город" onChange={(e) => void patchState({ teams: { ...state.teams, [teamKey]: { ...team, city: e.target.value } } })} />
+        <input className="rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={team.name} placeholder="Название" onChange={(e) => void patchState({ teams: { ...state.teams, [teamKey]: { ...team, name: e.target.value } } })} />
+        <input className="rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={team.city} placeholder="Город" onChange={(e) => void patchState({ teams: { ...state.teams, [teamKey]: { ...team, city: e.target.value } } })} />
       </div>
       <div className="mt-2 flex items-center gap-2">
         <input type="color" value={team.color} onChange={(e) => void patchState({ teams: { ...state.teams, [teamKey]: { ...team, color: e.target.value } } })} />
-        <input type="file" className="w-full rounded bg-white/10 px-2 py-1" onChange={(e) => void onUpload(teamKey, e.target.files?.[0] || null)} />
+        <input type="file" className="w-full rounded bg-gray-800 border border-white/20 text-white px-2 py-1" onChange={(e) => void onUpload(teamKey, e.target.files?.[0] || null)} />
       </div>
     </div>
   )
@@ -553,22 +553,42 @@ function ScoreboardPreview({ settings }: { settings: any }) {
   const PreviewComponent = { classic: Classic, stadium: Stadium, flat: Flat, neon: Neon, modern: Modern, split: Split }[settings.scoreboard_style] || Classic
   const scale = settings.scale || 1
   
-  const posMap = {
-    'top-left': 'top-4 left-4',
-    'top-center': 'top-4 left-1/2 -translate-x-1/2',
-    'top-right': 'top-4 right-4',
-    'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-    'bottom-left': 'bottom-4 left-4',
-    'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
-    'bottom-right': 'bottom-4 right-4'
+  const getPosition = () => {
+    const pos = settings.position || 'top-left'
+    return pos
   }
-  const positionClass = posMap[settings.position as keyof typeof posMap] || 'top-4 left-4'
+  const position = getPosition()
+  
+  const getPositionStyles = () => {
+    const baseStyles: React.CSSProperties = {
+      transform: `scale(${scale})`,
+      transformOrigin: 'top left'
+    }
+    
+    switch(position) {
+      case 'top-left':
+        return { ...baseStyles, position: 'absolute' as const, top: 16, left: 16 }
+      case 'top-center':
+        return { ...baseStyles, position: 'absolute' as const, top: 16, left: '50%', marginLeft: -160/scale }
+      case 'top-right':
+        return { ...baseStyles, position: 'absolute' as const, top: 16, right: 16 }
+      case 'center':
+        return { ...baseStyles, position: 'absolute' as const, top: '50%', left: '50%', marginTop: -50/scale, marginLeft: -160/scale }
+      case 'bottom-left':
+        return { ...baseStyles, position: 'absolute' as const, bottom: 16, left: 16 }
+      case 'bottom-center':
+        return { ...baseStyles, position: 'absolute' as const, bottom: 16, left: '50%', marginLeft: -160/scale }
+      case 'bottom-right':
+        return { ...baseStyles, position: 'absolute' as const, bottom: 16, right: 16 }
+      default:
+        return { ...baseStyles, position: 'absolute' as const, top: 16, left: 16 }
+    }
+  }
   
   return (
-    <div className="relative w-full overflow-hidden rounded-lg bg-black" style={{ aspectRatio: '16/9' }}>
+    <div className="relative w-full overflow-hidden rounded-lg bg-black border border-white/20" style={{ aspectRatio: '16/9' }}>
       <div 
-        className={`absolute ${positionClass}`}
-        style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
+        style={getPositionStyles()}
       >
         <PreviewComponent state={dummyState} settings={settings} timerText={timerText} />
       </div>
@@ -591,13 +611,13 @@ function DesignTab({ settings, patchSettings }: any) {
           <h3 className="text-sm font-semibold text-white/70">Общие</h3>
           <label className="block">
             <span className="mb-1 block text-sm">Стиль табло</span>
-            <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.scoreboard_style} onChange={(e) => void patchSettings({ scoreboard_style: e.target.value })}>
-              <option value="classic">Classic</option>
-              <option value="stadium">Stadium</option>
-              <option value="flat">Flat</option>
-              <option value="neon">Neon</option>
-              <option value="modern">Modern (UEFA)</option>
-              <option value="split">Split (pre-match)</option>
+            <select className="w-full rounded bg-gray-800 border border-white/20 px-3 py-2 text-white" value={settings.scoreboard_style} onChange={(e) => void patchSettings({ scoreboard_style: e.target.value })}>
+              <option className="bg-gray-800 text-white" value="classic">Classic</option>
+              <option className="bg-gray-800 text-white" value="stadium">Stadium</option>
+              <option className="bg-gray-800 text-white" value="flat">Flat</option>
+              <option className="bg-gray-800 text-white" value="neon">Neon</option>
+              <option className="bg-gray-800 text-white" value="modern">Modern (UEFA)</option>
+              <option className="bg-gray-800 text-white" value="split">Split (pre-match)</option>
             </select>
           </label>
           <label className="block">
@@ -606,7 +626,7 @@ function DesignTab({ settings, patchSettings }: any) {
           </label>
           <label className="block">
             <span className="mb-1 block text-sm">Позиция</span>
-            <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.position} onChange={(e) => void patchSettings({ position: e.target.value })}>
+            <select className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={settings.position} onChange={(e) => void patchSettings({ position: e.target.value })}>
               {['top-left', 'top-center', 'top-right', 'center', 'bottom-left', 'bottom-center', 'bottom-right'].map((pos) => (
                 <option key={pos} value={pos}>{pos}</option>
               ))}
@@ -618,7 +638,7 @@ function DesignTab({ settings, patchSettings }: any) {
           <h3 className="text-sm font-semibold text-white/70">Тайминг</h3>
           <label className="block">
             <span className="mb-1 block text-sm">Timer warning min</span>
-            <input type="number" className="w-full rounded bg-white/10 px-3 py-2" value={settings.timer_warning_min} onChange={(e) => void patchSettings({ timer_warning_min: Number(e.target.value) || 35 })} />
+            <input type="number" className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={settings.timer_warning_min} onChange={(e) => void patchSettings({ timer_warning_min: Number(e.target.value) || 35 })} />
           </label>
         </div>
         
@@ -649,7 +669,7 @@ function DesignTab({ settings, patchSettings }: any) {
           <h3 className="text-sm font-semibold text-white/70">Логотип</h3>
           <label className="block">
             <span className="mb-1 block text-sm">Logo shape</span>
-            <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.logo_shape} onChange={(e) => void patchSettings({ logo_shape: e.target.value })}>
+            <select className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={settings.logo_shape} onChange={(e) => void patchSettings({ logo_shape: e.target.value })}>
               {['square', 'rounded', 'circle', 'circle-border'].map((shape) => (
                 <option key={shape} value={shape}>{shape}</option>
               ))}
@@ -657,7 +677,7 @@ function DesignTab({ settings, patchSettings }: any) {
           </label>
           <label className="block">
             <span className="mb-1 block text-sm">Score font</span>
-            <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.score_font} onChange={(e) => void patchSettings({ score_font: e.target.value })}>
+            <select className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={settings.score_font} onChange={(e) => void patchSettings({ score_font: e.target.value })}>
               {['default', 'mono', 'bold'].map((font) => (
                 <option key={font} value={font}>{font}</option>
               ))}
@@ -668,7 +688,7 @@ function DesignTab({ settings, patchSettings }: any) {
         <div className="space-y-3">
           <h3 className="text-sm font-semibold text-white/70">Действия</h3>
         <button
-          className="rounded bg-white/10 px-3 py-2"
+          className="rounded bg-gray-800 border border-white/20 text-white px-3 py-2"
           onClick={() =>
             void patchSettings({
               scale: 1,
@@ -767,8 +787,8 @@ function MediaTab({ items, onUpload, onDelete }: any) {
     <section className="rounded-xl border border-white/20 bg-black/30 p-4">
       <h2 className="mb-3 text-lg font-semibold">Медиатека</h2>
       <div className="mb-4 flex flex-col gap-2 md:flex-row">
-        <input value={name} onChange={(e) => setName(e.target.value)} className="rounded bg-white/10 px-3 py-2" placeholder="Название" />
-        <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="rounded bg-white/10 px-3 py-2" />
+        <input value={name} onChange={(e) => setName(e.target.value)} className="rounded bg-gray-800 border border-white/20 text-white px-3 py-2" placeholder="Название" />
+        <input type="file" onChange={(e) => setFile(e.target.files?.[0] || null)} className="rounded bg-gray-800 border border-white/20 text-white px-3 py-2" />
         <button onClick={() => void upload()} className="rounded bg-emerald-500 px-3 py-2 text-black">Загрузить</button>
       </div>
       <div className="grid gap-2 md:grid-cols-2">
@@ -807,7 +827,7 @@ function MediaPicker({ items, selectedIds, onChange, label }: { items: any[]; se
           <button
             key={item.id}
             onClick={() => toggle(item.id)}
-            className={`truncate rounded p-2 text-xs ${selectedIds.includes(item.id) ? 'bg-emerald-500 text-black' : 'bg-white/10'}`}
+            className={`truncate rounded p-2 text-xs ${selectedIds.includes(item.id) ? 'bg-emerald-500 text-black' : 'bg-gray-800 border border-white/20 text-white'}`}
           >
             {item.name}
           </button>
@@ -861,7 +881,7 @@ function FxTab({ state, patchState, items }: any) {
         <label className="block">
           <span className="mb-1 block text-sm">Голы (soundPlaylistIds)</span>
           <input
-            className="w-full rounded bg-white/10 px-3 py-2"
+            className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2"
             value={state.goalAnimation.soundPlaylistIds.join(',')}
             onChange={(e) => void patchState({ goalAnimation: { ...state.goalAnimation, soundPlaylistIds: parseIds(e.target.value) } })}
           />
@@ -869,38 +889,38 @@ function FxTab({ state, patchState, items }: any) {
         <label className="block">
           <span className="mb-1 block text-sm">Пропущенные (concededPlaylistIds)</span>
           <input
-            className="w-full rounded bg-white/10 px-3 py-2"
+            className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2"
             value={state.goalAnimation.concededPlaylistIds.join(',')}
             onChange={(e) => void patchState({ goalAnimation: { ...state.goalAnimation, concededPlaylistIds: parseIds(e.target.value) } })}
           />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm">Интро playlist</span>
-          <input className="w-full rounded bg-white/10 px-3 py-2" value={state.introScreen.soundPlaylistIds.join(',')} onChange={(e) => void patchState({ introScreen: { ...state.introScreen, soundPlaylistIds: parseIds(e.target.value) } })} />
+          <input className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.introScreen.soundPlaylistIds.join(',')} onChange={(e) => void patchState({ introScreen: { ...state.introScreen, soundPlaylistIds: parseIds(e.target.value) } })} />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm">Пауза playlist</span>
-          <input className="w-full rounded bg-white/10 px-3 py-2" value={state.pauseScreenPlaylist.soundPlaylistIds.join(',')} onChange={(e) => void patchState({ pauseScreenPlaylist: { ...state.pauseScreenPlaylist, soundPlaylistIds: parseIds(e.target.value) } })} />
+          <input className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.pauseScreenPlaylist.soundPlaylistIds.join(',')} onChange={(e) => void patchState({ pauseScreenPlaylist: { ...state.pauseScreenPlaylist, soundPlaylistIds: parseIds(e.target.value) } })} />
         </label>
         <label className="block">
           <span className="mb-1 block text-sm">Режим плейлиста: Голы</span>
-          <select className="w-full rounded bg-white/10 px-3 py-2" value={state.goalAnimation.playlistMode} onChange={(e) => void patchState({ goalAnimation: { ...state.goalAnimation, playlistMode: e.target.value } })}>
-            <option value="sequence">sequence</option>
-            <option value="random">random</option>
+          <select className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.goalAnimation.playlistMode} onChange={(e) => void patchState({ goalAnimation: { ...state.goalAnimation, playlistMode: e.target.value } })}>
+            <option className="bg-gray-800 text-white" value="sequence">sequence</option>
+            <option className="bg-gray-800 text-white" value="random">random</option>
           </select>
         </label>
         <label className="block">
           <span className="mb-1 block text-sm">Режим плейлиста: Интро</span>
-          <select className="w-full rounded bg-white/10 px-3 py-2" value={state.introScreen.playlistMode} onChange={(e) => void patchState({ introScreen: { ...state.introScreen, playlistMode: e.target.value } })}>
-            <option value="sequence">sequence</option>
-            <option value="random">random</option>
+          <select className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.introScreen.playlistMode} onChange={(e) => void patchState({ introScreen: { ...state.introScreen, playlistMode: e.target.value } })}>
+            <option className="bg-gray-800 text-white" value="sequence">sequence</option>
+            <option className="bg-gray-800 text-white" value="random">random</option>
           </select>
         </label>
         <label className="block">
           <span className="mb-1 block text-sm">Режим плейлиста: Пауза</span>
-          <select className="w-full rounded bg-white/10 px-3 py-2" value={state.pauseScreenPlaylist.playlistMode} onChange={(e) => void patchState({ pauseScreenPlaylist: { ...state.pauseScreenPlaylist, playlistMode: e.target.value } })}>
-            <option value="sequence">sequence</option>
-            <option value="random">random</option>
+          <select className="w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-2" value={state.pauseScreenPlaylist.playlistMode} onChange={(e) => void patchState({ pauseScreenPlaylist: { ...state.pauseScreenPlaylist, playlistMode: e.target.value } })}>
+            <option className="bg-gray-800 text-white" value="sequence">sequence</option>
+            <option className="bg-gray-800 text-white" value="random">random</option>
           </select>
         </label>
         <Toggle label="Анимации голов" value={state.goalAnimation.animationsEnabled} onChange={(value) => void patchState({ goalAnimation: { ...state.goalAnimation, animationsEnabled: value } })} />
@@ -919,11 +939,11 @@ function AccessTab({ channels, onAdd, onDelete, onActive }: any) {
     <section className="rounded-xl border border-white/20 bg-black/30 p-4">
       <h2 className="mb-3 text-lg font-semibold">VK каналы</h2>
       <div className="mb-4 space-y-2">
-        <input value={name} onChange={(e) => setName(e.target.value)} className="min-h-[48px] w-full rounded bg-white/10 px-3 py-3" placeholder="Название" />
-        <input value={rtmp} onChange={(e) => setRtmp(e.target.value)} className="min-h-[48px] w-full rounded bg-white/10 px-3 py-3" placeholder="RTMP URL" />
+        <input value={name} onChange={(e) => setName(e.target.value)} className="min-h-[48px] w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-3" placeholder="Название" />
+        <input value={rtmp} onChange={(e) => setRtmp(e.target.value)} className="min-h-[48px] w-full rounded bg-gray-800 border border-white/20 text-white px-3 py-3" placeholder="RTMP URL" />
         <div className="flex gap-2">
-          <input type={showKey ? 'text' : 'password'} value={key} onChange={(e) => setKey(e.target.value)} className="min-h-[48px] flex-1 rounded bg-white/10 px-3 py-3" placeholder="Stream key" />
-          <button onClick={() => setShowKey(!showKey)} className={`min-h-[48px] rounded bg-white/10 px-3 py-2 text-sm ${showKey ? 'text-yellow-400' : ''}`}>
+          <input type={showKey ? 'text' : 'password'} value={key} onChange={(e) => setKey(e.target.value)} className="min-h-[48px] flex-1 rounded bg-gray-800 border border-white/20 text-white px-3 py-3" placeholder="Stream key" />
+          <button onClick={() => setShowKey(!showKey)} className={`min-h-[48px] rounded bg-gray-800 border border-white/20 text-white px-3 py-2 text-sm ${showKey ? 'text-yellow-400' : ''}`}>
             {showKey ? '🙈' : '👁'}
           </button>
           <button
@@ -945,7 +965,7 @@ function AccessTab({ channels, onAdd, onDelete, onActive }: any) {
             <div className="mb-1 font-semibold">{channel.name}</div>
             <div className="text-xs text-white/70">{channel.rtmp_url}</div>
             <div className="mt-2 flex gap-2">
-              <button onClick={() => void onActive(channel.id)} className={`rounded px-3 py-1 text-sm ${channel.is_active ? 'bg-emerald-500 text-black' : 'bg-white/10'}`}>
+              <button onClick={() => void onActive(channel.id)} className={`rounded px-3 py-1 text-sm ${channel.is_active ? 'bg-emerald-500 text-black' : 'bg-gray-800 border border-white/20 text-white'}`}>
                 {channel.is_active ? 'Активен' : 'Сделать активным'}
               </button>
               <button onClick={() => void onDelete(channel.id)} className="rounded bg-red-500/80 px-3 py-1 text-sm">Удалить</button>
