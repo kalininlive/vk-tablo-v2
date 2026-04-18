@@ -170,21 +170,22 @@ export default function AdminPanel() {
 
   return (
     <div className="min-h-screen pb-20 p-3 md:pb-3 md:p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 md:mb-4">
-        <h1 className="text-xl font-bold md:text-2xl">Пульт трансляции</h1>
-        <button
-          className="rounded bg-white/10 px-3 py-2 text-sm"
-          onClick={() => {
-            localStorage.removeItem('vk_auth')
-            setAuth(false)
-          }}
-        >
-          Выйти
-        </button>
-      </div>
+      <div className="mx-auto max-w-[1280px]">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2 md:mb-4">
+          <h1 className="text-xl font-bold md:text-2xl">Пульт трансляции</h1>
+          <button
+            className="rounded bg-white/10 px-3 py-2 text-sm"
+            onClick={() => {
+              localStorage.removeItem('vk_auth')
+              setAuth(false)
+            }}
+          >
+            Выйти
+          </button>
+        </div>
 
-      <div className="mb-4 hidden flex-wrap gap-2 md:mb-4 md:flex md:flex-nowrap">
-        {tabs.map((entry) => (
+        <div className="mb-4 hidden flex-wrap gap-2 md:mb-4 md:flex md:flex-nowrap">
+          {tabs.map((entry) => (
           <button
             key={entry.id}
             className={`flex-1 rounded px-2 py-2 text-xs md:flex-none md:px-3 md:py-2 md:text-sm ${tab === entry.id ? 'bg-emerald-500 text-black' : 'bg-white/10'}`}
@@ -211,7 +212,7 @@ export default function AdminPanel() {
       </div>
 
       {tab === 'air' ? (
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="grid gap-4">
           {/* Блок: Эфир */}
           <section className="rounded-xl border border-white/20 bg-black/30 p-4">
             <h2 className="mb-3 text-lg font-semibold">Эфир</h2>
@@ -357,11 +358,11 @@ export default function AdminPanel() {
         </div>
       ) : null}
 
-      {tab === 'match' ? <MatchTab state={state} patchState={patchState} channels={channels} /> : null}
-      {tab === 'design' ? <DesignTab settings={settings} patchSettings={patchSettings} /> : null}
-      {tab === 'media' ? <MediaTab onUpload={uploadItem} items={items} onDelete={deleteItem} /> : null}
-      {tab === 'fx' ? <FxTab state={state} patchState={patchState} items={items} /> : null}
-      {tab === 'access' ? <AccessTab channels={channels} onAdd={addChannel} onDelete={deleteChannel} onActive={setActive} /> : null}
+      {tab === 'match' ? <div className="max-w-[1280px]"><MatchTab state={state} patchState={patchState} channels={channels} /></div> : null}
+      {tab === 'design' ? <div className="max-w-[1280px]"><DesignTab settings={settings} patchSettings={patchSettings} /></div> : null}
+      {tab === 'media' ? <div className="max-w-[1280px]"><MediaTab onUpload={uploadItem} items={items} onDelete={deleteItem} /></div> : null}
+      {tab === 'fx' ? <div className="max-w-[1280px]"><FxTab state={state} patchState={patchState} items={items} /></div> : null}
+      {tab === 'access' ? <div className="max-w-[1280px]"><AccessTab channels={channels} onAdd={addChannel} onDelete={deleteChannel} onActive={setActive} /></div> : null}
 
       {confirmReset && (
         <ConfirmModal
@@ -379,6 +380,7 @@ export default function AdminPanel() {
       )}
 
       {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
+      </div>
     </div>
   )
 }
@@ -447,7 +449,7 @@ function MatchTab({ state, patchState, channels }: any) {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-2">
+    <div className="grid gap-4">
       <section className="rounded-xl border border-white/20 bg-black/30 p-4">
         <h2 className="mb-3 text-lg font-semibold">Команды</h2>
         <TeamEditor teamKey="team1" state={state} patchState={patchState} onUpload={uploadTeamLogo} />
@@ -797,7 +799,7 @@ function FxTab({ state, patchState, items }: any) {
   }
 
   return (
-    <section className="rounded-xl border border-white/20 bg-black/30 p-4">
+    <section className="max-w-[1280px] rounded-xl border border-white/20 bg-black/30 p-4">
       <h2 className="mb-2 text-lg font-semibold">FX плейлисты</h2>
       <MediaPicker label="Голы" items={items} selectedIds={state.goalAnimation.soundPlaylistIds} onChange={(ids) => updatePlaylist('goal', ids)} />
       <label className="block">
@@ -876,14 +878,12 @@ function AccessTab({ channels, onAdd, onDelete, onActive }: any) {
   return (
     <section className="rounded-xl border border-white/20 bg-black/30 p-4">
       <h2 className="mb-3 text-lg font-semibold">VK каналы</h2>
-      <div className="mb-4 grid gap-2 md:grid-cols-4">
-        <input value={name} onChange={(e) => setName(e.target.value)} className="rounded bg-white/10 px-3 py-2" placeholder="Название" />
-        <input value={rtmp} onChange={(e) => setRtmp(e.target.value)} className="rounded bg-white/10 px-3 py-2" placeholder="RTMP URL" />
-        <div className="relative">
-          <input type={showKey ? 'text' : 'password'} value={key} onChange={(e) => setKey(e.target.value)} className="w-full rounded bg-white/10 px-3 py-2" placeholder="Stream key" />
-        </div>
-        <div className="flex gap-1">
-          <button onClick={() => setShowKey(!showKey)} className={`rounded bg-white/10 px-2 py-2 text-sm ${showKey ? 'text-yellow-400' : ''}`}>
+      <div className="mb-4 space-y-2">
+        <input value={name} onChange={(e) => setName(e.target.value)} className="min-h-[48px] w-full rounded bg-white/10 px-3 py-3" placeholder="Название" />
+        <input value={rtmp} onChange={(e) => setRtmp(e.target.value)} className="min-h-[48px] w-full rounded bg-white/10 px-3 py-3" placeholder="RTMP URL" />
+        <div className="flex gap-2">
+          <input type={showKey ? 'text' : 'password'} value={key} onChange={(e) => setKey(e.target.value)} className="min-h-[48px] flex-1 rounded bg-white/10 px-3 py-3" placeholder="Stream key" />
+          <button onClick={() => setShowKey(!showKey)} className={`min-h-[48px] rounded bg-white/10 px-3 py-2 text-sm ${showKey ? 'text-yellow-400' : ''}`}>
             {showKey ? '🙈' : '👁'}
           </button>
           <button
@@ -892,7 +892,7 @@ function AccessTab({ channels, onAdd, onDelete, onActive }: any) {
               void onAdd(name, rtmp, key)
               setKey('')
             }}
-            className="flex-1 rounded bg-emerald-500 px-2 py-2 text-sm text-black"
+            className="min-h-[48px] flex-1 rounded bg-emerald-500 px-3 py-3 text-black"
           >
             +
           </button>
