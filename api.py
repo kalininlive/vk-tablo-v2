@@ -9,6 +9,7 @@ import time
 from typing import Any, Dict, Optional
 
 import psycopg2
+from psycopg2 import pool
 from flask import Flask, jsonify, request
 
 app = Flask(__name__, threaded=True)
@@ -22,15 +23,32 @@ obs_process: Optional[subprocess.Popen] = None
 xvfb_process: Optional[subprocess.Popen] = None
 _stream_lock = threading.Lock()
 
+_db_pool = None
+
+
+def init_db_pool():
+    global _db_pool
+    if _db_pool is None:
+        _db_pool = pool.ThreadedConnectionPool(
+            minconn=2,
+            maxconn=10,
+            host="127.0.0.1",
+            port=5432,
+            dbname="postgres",
+            user="postgres",
+            password=os.getenv("DB_PASSWORD", ""),
+        )
+
 
 def db_conn():
-    return psycopg2.connect(
-        host="127.0.0.1",
-        port=5432,
-        dbname="postgres",
-        user="postgres",
-        password=os.getenv("DB_PASSWORD", ""),
-    )
+    init_db_pool()
+    conn = _db_pool.getconn()
+    return conn
+
+
+def close_db_conn(conn):
+    if conn and _db_pool:
+        _db_pool.putconn(conn)
 
 
 def require_secret() -> Optional[Any]:
@@ -56,15 +74,22 @@ def is_alive(proc: Optional[subprocess.Popen]) -> bool:
 
 
 def read_active_channel() -> Optional[Dict[str, str]]:
-    with db_conn() as conn:
+    conn = db_conn()
+    try:
         with conn.cursor() as cur:
             cur.execute(
                 "SELECT rtmp_url, stream_key FROM vk_channels WHERE is_active = true ORDER BY id ASC LIMIT 1"
             )
             row = cur.fetchone()
             if not row:
+                close_db_conn(conn)
                 return None
-            return {"rtmp_url": row[0], "stream_key": row[1]}
+            result = {"rtmp_url": row[0], "stream_key": row[1]}
+        close_db_conn(conn)
+        return result
+    except Exception:
+        close_db_conn(conn)
+        raise
 
 
 def ensure_obs_files(channel: Dict[str, str]):
@@ -217,21 +242,32 @@ def clear_safe_mode_flag():
 
 
 def load_match_state() -> Dict[str, Any]:
-    with db_conn() as conn:
+    conn = db_conn()
+    try:
         with conn.cursor() as cur:
             cur.execute("SELECT state FROM football_match_state WHERE id = 1")
             row = cur.fetchone()
-            return row[0] if row else {}
+            result = row[0] if row else {}
+        close_db_conn(conn)
+        return result
+    except Exception:
+        close_db_conn(conn)
+        raise
 
 
 def save_match_state(state: Dict[str, Any]):
-    with db_conn() as conn:
+    conn = db_conn()
+    try:
         with conn.cursor() as cur:
             cur.execute(
                 "UPDATE football_match_state SET state = %s WHERE id = 1",
                 (json.dumps(state),),
             )
         conn.commit()
+        close_db_conn(conn)
+    except Exception:
+        close_db_conn(conn)
+        raise
 
 
 def deep_merge(base: Dict[str, Any], patch: Dict[str, Any]) -> Dict[str, Any]:

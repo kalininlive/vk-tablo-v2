@@ -3,6 +3,13 @@ import { motion } from 'framer-motion'
 import { useMediaLibrary, useOverlaySettingsRT, useOverlayState } from './useMatchState'
 import { Classic, Flat, Neon, Stadium } from './scoreboards'
 
+const SCOREBOARD_REGISTRY: Record<string, React.ComponentType<any>> = {
+  classic: Classic,
+  stadium: Stadium,
+  flat: Flat,
+  neon: Neon
+}
+
 function formatMs(ms: number) {
   const totalSec = Math.floor(ms / 1000)
   const min = Math.floor(totalSec / 60)
@@ -272,16 +279,8 @@ export default function Overlay() {
 
   const scoreBoard = useMemo(() => {
     const props = { state, settings, timerText }
-    switch (settings.scoreboard_style) {
-      case 'stadium':
-        return <Stadium {...props} />
-      case 'flat':
-        return <Flat {...props} />
-      case 'neon':
-        return <Neon {...props} />
-      default:
-        return <Classic {...props} />
-    }
+    const ScoreboardComponent = SCOREBOARD_REGISTRY[settings.scoreboard_style] || Classic
+    return <ScoreboardComponent {...props} />
   }, [settings, state, timerText])
 
   const introCount = useMemo(() => {
