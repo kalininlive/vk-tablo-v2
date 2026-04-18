@@ -10,6 +10,32 @@ import {
 
 type TabId = 'air' | 'match' | 'design' | 'media' | 'fx' | 'access'
 
+function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error' | 'info'; onClose: () => void }) {
+  useEffect(() => {
+    const id = setTimeout(onClose, 3000)
+    return () => clearTimeout(id)
+  }, [onClose])
+  return (
+    <div className={`fixed right-3 top-3 z-50 rounded-lg px-4 py-3 shadow-lg ${type === 'success' ? 'bg-emerald-500' : type === 'error' ? 'bg-red-500' : 'bg-blue-500'} text-white`}>
+      {message}
+    </div>
+  )
+}
+
+function ConfirmModal({ message, onConfirm, onCancel }: { message: string; onConfirm: () => void; onCancel: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+      <div className="w-full max-w-sm rounded-xl border border-white/20 bg-black/80 p-5">
+        <div className="mb-5 text-center text-lg">{message}</div>
+        <div className="flex gap-3">
+          <button onClick={onCancel} className="min-h-[48px] flex-1 rounded-lg bg-white/10">Отмена</button>
+          <button onClick={onConfirm} className="min-h-[48px] flex-1 rounded-lg bg-red-500 font-semibold text-white">Сброс</button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 const tabs: Array<{ id: TabId; label: string }> = [
   { id: 'air', label: 'Эфир' },
   { id: 'match', label: 'Матч' },
@@ -56,13 +82,13 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
   }
 
   return (
-    <div className="mx-auto mt-24 w-full max-w-md rounded-2xl border border-white/20 bg-black/30 p-6">
+    <div className="mx-auto mt-20 w-full max-w-md rounded-2xl border border-white/20 bg-black/30 p-6">
       <h1 className="mb-4 text-2xl font-bold">VK Tablo v2</h1>
       <p className="mb-6 text-sm text-white/70">Вход в админ-панель</p>
       <form className="space-y-3" onSubmit={submit}>
-        <input value={username} onChange={(e) => setUsername(e.target.value)} className="w-full rounded bg-white/10 px-3 py-2" placeholder="Логин" />
-        <input value={password} onChange={(e) => setPassword(e.target.value)} className="w-full rounded bg-white/10 px-3 py-2" placeholder="Пароль" type="password" />
-        <button disabled={loading} className="w-full rounded bg-emerald-500 px-3 py-2 font-semibold text-black">
+        <input value={username} onChange={(e) => setUsername(e.target.value)} className="min-h-[48px] w-full rounded bg-white/10 px-3 py-3" placeholder="Логин" />
+        <input value={password} onChange={(e) => setPassword(e.target.value)} className="min-h-[48px] w-full rounded bg-white/10 px-3 py-3" placeholder="Пароль" type="password" />
+        <button disabled={loading} className="min-h-[48px] w-full rounded bg-emerald-500 px-3 py-3 font-semibold text-black">
           {loading ? 'Проверка...' : 'Войти'}
         </button>
       </form>
@@ -75,12 +101,14 @@ export default function AdminPanel() {
   const [auth, setAuth] = useState(localStorage.getItem('vk_auth') === '1')
   const [tab, setTab] = useState<TabId>('air')
   const [now, setNow] = useState(Date.now())
+  const [confirmReset, setConfirmReset] = useState(false)
 
   const { state, patchState, loading } = useMatchState()
   const { settings, patchSettings } = useOverlaySettings()
   const { channels, addChannel, deleteChannel, setActive } = useVKChannels()
   const { items, uploadItem, deleteItem } = useMediaLibrary()
   const stream = useStreamControl()
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null)
 
   useEffect(() => {
     const id = window.setInterval(() => setNow(Date.now()), 500)
@@ -140,9 +168,9 @@ export default function AdminPanel() {
   }
 
   return (
-    <div className="min-h-screen p-3 md:p-6">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <h1 className="text-2xl font-bold">Пульт трансляции</h1>
+    <div className="min-h-screen pb-20 p-3 md:pb-3 md:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 md:mb-4">
+        <h1 className="text-xl font-bold md:text-2xl">Пульт трансляции</h1>
         <button
           className="rounded bg-white/10 px-3 py-2 text-sm"
           onClick={() => {
@@ -154,16 +182,31 @@ export default function AdminPanel() {
         </button>
       </div>
 
-      <div className="mb-4 flex flex-wrap gap-2">
+      <div className="mb-4 hidden flex-wrap gap-2 md:mb-4 md:flex md:flex-nowrap">
         {tabs.map((entry) => (
           <button
             key={entry.id}
-            className={`rounded px-3 py-2 text-sm ${tab === entry.id ? 'bg-emerald-500 text-black' : 'bg-white/10'}`}
+            className={`flex-1 rounded px-2 py-2 text-xs md:flex-none md:px-3 md:py-2 md:text-sm ${tab === entry.id ? 'bg-emerald-500 text-black' : 'bg-white/10'}`}
             onClick={() => setTab(entry.id)}
           >
             {entry.label}
           </button>
         ))}
+      </div>
+
+      <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-white/10 bg-black/90 md:hidden">
+        <div className="flex">
+          {tabs.map((entry) => (
+            <button
+              key={entry.id}
+              onClick={() => setTab(entry.id)}
+              className={`flex-1 flex flex-col items-center gap-0.5 py-3 ${tab === entry.id ? 'text-emerald-400' : 'text-white/60'}`}
+            >
+              <span className="text-lg">{entry.id === 'air' ? '📺' : entry.id === 'match' ? '⚽' : entry.id === 'design' ? '🎨' : entry.id === 'media' ? '📁' : entry.id === 'fx' ? '🎵' : '🔑'}</span>
+              <span className="text-xs">{entry.label}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
       {tab === 'air' ? (
@@ -173,7 +216,7 @@ export default function AdminPanel() {
             <h2 className="mb-3 text-lg font-semibold">Эфир</h2>
             <button
               disabled={stream.loading}
-              className={`w-full rounded-xl py-3 font-bold text-base transition-colors ${stream.streaming ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}
+              className={`min-h-[48px] w-full rounded-xl py-3 font-bold text-base transition-colors ${stream.streaming ? 'bg-red-500 text-white' : 'bg-emerald-500 text-black'}`}
               onClick={() => void (stream.streaming ? stream.stop() : stream.start())}
             >
               {stream.streaming ? '⏹ ОФФЛАЙН' : '▶ В ЭФИР'}
@@ -183,7 +226,7 @@ export default function AdminPanel() {
 
             <label className="mt-4 mb-1 block text-sm text-white/70">Наша команда</label>
             <select
-              className="w-full rounded-lg bg-white/10 px-3 py-2"
+              className="min-h-[48px] w-full rounded-lg bg-white/10 px-3 py-2"
               value={state.ourTeam || ''}
               onChange={(e) => void patchState({ ourTeam: (e.target.value || null) as any })}
             >
@@ -232,14 +275,7 @@ export default function AdminPanel() {
                 {state.timer.isRunning ? '⏸ СТОП' : '▶ СТАРТ'}
               </button>
               <button
-                onClick={() => {
-                  if (window.confirm('Сбросить таймер и счёт?')) {
-                    void patchState({
-                      timer: { ...state.timer, isRunning: false, startTimestamp: null, accumulatedTime: 0, half: 1 },
-                      score: { team1: 0, team2: 0 }
-                    })
-                  }
-                }}
+                onClick={() => setConfirmReset(true)}
                 className="rounded-lg bg-white/10 px-4 py-3 text-sm text-white/70"
               >
                 Сброс
@@ -284,24 +320,24 @@ export default function AdminPanel() {
             <div className="mt-4">
               <div className="mb-2 text-sm font-semibold text-white/70">Карточки</div>
               <input
-                className="mb-3 w-full rounded-lg bg-white/10 px-3 py-2 text-sm"
+                className="min-h-[48px] mb-3 w-full rounded-lg bg-white/10 px-3 py-3 text-sm"
                 placeholder="Имя игрока"
                 value={state.cardEvent.playerName}
                 onChange={(e) => void patchState({ cardEvent: { ...state.cardEvent, playerName: e.target.value } })}
               />
               {(['team1', 'team2'] as const).map((team) => (
-                <div key={team} className="mb-2 flex items-center gap-2 rounded-lg bg-white/5 px-3 py-2">
+                <div key={team} className="mb-2 flex min-h-[48px] items-center gap-2 rounded-lg bg-white/5 px-2 py-2">
                   <span className="flex-1 truncate text-sm">{state.teams[team].name}</span>
                   <button
                     type="button"
-                    className="rounded-lg bg-yellow-400 px-3 py-1.5 text-xs font-bold text-black"
+                    className="min-h-[40px] min-w-[40px] rounded-lg bg-yellow-400 px-3 font-bold text-black"
                     onClick={() => void patchState({ cardEvent: { ...state.cardEvent, isActive: true, cardId: crypto.randomUUID(), teamSide: team, cardType: 'yellow' } })}
                   >
                     Ж
                   </button>
                   <button
                     type="button"
-                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-bold text-white"
+                    className="min-h-[40px] min-w-[40px] rounded-lg bg-red-600 px-3 font-bold text-white"
                     onClick={() => void patchState({ cardEvent: { ...state.cardEvent, isActive: true, cardId: crypto.randomUUID(), teamSide: team, cardType: 'red' } })}
                   >
                     К
@@ -310,7 +346,7 @@ export default function AdminPanel() {
               ))}
               <button
                 type="button"
-                className="mt-1 w-full rounded-lg bg-white/10 py-2 text-sm text-white/60"
+                className="min-h-[48px] mt-1 w-full rounded-lg bg-white/10 py-2 text-sm text-white/60"
                 onClick={() => void patchState({ cardEvent: { ...state.cardEvent, isActive: false } })}
               >
                 Скрыть карточку
@@ -325,6 +361,23 @@ export default function AdminPanel() {
       {tab === 'media' ? <MediaTab onUpload={uploadItem} items={items} onDelete={deleteItem} /> : null}
       {tab === 'fx' ? <FxTab state={state} patchState={patchState} /> : null}
       {tab === 'access' ? <AccessTab channels={channels} onAdd={addChannel} onDelete={deleteChannel} onActive={setActive} /> : null}
+
+      {confirmReset && (
+        <ConfirmModal
+          message="Сбросить таймер и счёт?"
+          onConfirm={async () => {
+            setConfirmReset(false)
+            await patchState({
+              timer: { ...state.timer, isRunning: false, startTimestamp: null, accumulatedTime: 0, half: 1 },
+              score: { team1: 0, team2: 0 }
+            })
+            setToast({ message: 'Сброшено', type: 'success' })
+          }}
+          onCancel={() => setConfirmReset(false)}
+        />
+      )}
+
+      {toast && <Toast message={toast.message} type={toast.type} onClose={() => setToast(null)} />}
     </div>
   )
 }
@@ -346,14 +399,14 @@ function Toggle({ label, value, onChange }: { label: string; value: boolean; onC
 
 function ScoreRow({ name, score, onPlus, onMinus }: { name: string; score: number; onPlus: () => void; onMinus: () => void }) {
   return (
-    <div className="mb-2 flex items-center justify-between rounded bg-white/5 px-3 py-2 last:mb-0">
-      <div>{name}</div>
+    <div className="mb-2 flex min-h-[48px] items-center justify-between rounded bg-white/5 px-3 last:mb-0">
+      <div className="truncate">{name}</div>
       <div className="flex items-center gap-2">
-        <button onClick={onMinus} className="rounded bg-white/10 px-2">
+        <button onClick={onMinus} className="min-h-[40px] min-w-[40px] rounded-lg bg-white/10 px-3">
           -1
         </button>
         <span className="w-8 text-center text-xl font-bold">{score}</span>
-        <button onClick={onPlus} className="rounded bg-white/10 px-2">
+        <button onClick={onPlus} className="min-h-[40px] min-w-[40px] rounded-lg bg-white/10 px-3">
           +1
         </button>
       </div>
