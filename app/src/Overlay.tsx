@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { motion } from 'framer-motion'
 import { useMediaLibrary, useOverlaySettingsRT, useOverlayState } from './useMatchState'
-import { Classic, Flat, Neon, Stadium } from './scoreboards'
+import { Classic, Flat, Neon, Stadium, Modern, Split } from './scoreboards'
 
 const SCOREBOARD_REGISTRY: Record<string, React.ComponentType<any>> = {
   classic: Classic,
   stadium: Stadium,
   flat: Flat,
-  neon: Neon
+  neon: Neon,
+  modern: Modern,
+  split: Split
 }
 
 function formatMs(ms: number) {

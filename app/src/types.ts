@@ -100,7 +100,7 @@ export interface OverlaySettings {
   color_half: string
   timer_warning_min: number
   sponsor_size: number
-  scoreboard_style: 'classic' | 'stadium' | 'flat' | 'neon'
+  scoreboard_style: 'classic' | 'stadium' | 'flat' | 'neon' | 'modern' | 'split'
   logo_shape: 'square' | 'rounded' | 'circle' | 'circle-border'
   strip_enabled: boolean
   strip_color: string

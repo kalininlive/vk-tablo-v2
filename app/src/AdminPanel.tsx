@@ -575,6 +575,8 @@ function DesignTab({ settings, patchSettings }: any) {
             <option value="stadium">Stadium</option>
             <option value="flat">Flat</option>
             <option value="neon">Neon</option>
+            <option value="modern">Modern (UEFA)</option>
+            <option value="split">Split (pre-match)</option>
           </select>
         </label>
         <label className="block">
@@ -652,6 +654,45 @@ function DesignTab({ settings, patchSettings }: any) {
         >
           Сбросить по умолчанию
         </button>
+        <div className="flex gap-2">
+          <button
+            className="flex-1 rounded bg-blue-500/80 px-2 py-2 text-sm"
+            onClick={() => {
+              const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' })
+              const url = URL.createObjectURL(blob)
+              const a = document.createElement('a')
+              a.href = url
+              a.download = 'overlay-settings.json'
+              a.click()
+              URL.revokeObjectURL(url)
+            }}
+          >
+            Экспорт
+          </button>
+          <input
+            type="file"
+            accept=".json"
+            className="hidden"
+            id="import-settings"
+            onChange={(e) => {
+              const file = e.target.files?.[0]
+              if (!file) return
+              const reader = new FileReader()
+              reader.onload = (ev) => {
+                try {
+                  const imported = JSON.parse(ev.target?.result as string)
+                  patchSettings(imported)
+                } catch {
+                  alert('Ошибка импорта')
+                }
+              }
+              reader.readAsText(file)
+            }}
+          />
+          <label htmlFor="import-settings" className="flex-1 cursor-pointer rounded bg-emerald-500/80 px-2 py-2 text-center text-sm">
+            Импорт
+          </label>
+        </div>
       </div>
     </section>
   )
