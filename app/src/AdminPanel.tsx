@@ -7,6 +7,7 @@ import {
   useStreamControl,
   useVKChannels
 } from './useMatchState'
+import { Classic, Flat, Neon, Stadium } from './scoreboards'
 
 type TabId = 'air' | 'match' | 'design' | 'media' | 'fx' | 'access'
 
@@ -359,7 +360,7 @@ export default function AdminPanel() {
       {tab === 'match' ? <MatchTab state={state} patchState={patchState} channels={channels} /> : null}
       {tab === 'design' ? <DesignTab settings={settings} patchSettings={patchSettings} /> : null}
       {tab === 'media' ? <MediaTab onUpload={uploadItem} items={items} onDelete={deleteItem} /> : null}
-      {tab === 'fx' ? <FxTab state={state} patchState={patchState} /> : null}
+      {tab === 'fx' ? <FxTab state={state} patchState={patchState} items={items} /> : null}
       {tab === 'access' ? <AccessTab channels={channels} onAdd={addChannel} onDelete={deleteChannel} onActive={setActive} /> : null}
 
       {confirmReset && (
@@ -530,10 +531,42 @@ function TeamEditor({ teamKey, state, patchState, onUpload }: any) {
   )
 }
 
+function ScoreboardPreview({ settings }: { settings: any }) {
+  const dummyState = {
+    teams: { team1: { name: 'Команда 1', city: 'Москва', logo: '', color: '#ef4444' }, team2: { name: 'Команда 2', city: 'СПб', logo: '', color: '#3b82f6' } },
+    score: { team1: 2, team2: 1 },
+    timer: { isRunning: false, half: 1, accumulatedTime: 2700000, startTimestamp: null },
+    goalAnimation: { isActive: false, goalId: '', teamSide: 'team1', teamName: '', newScore: { team1: 0, team2: 0 }, soundPlaylistIds: [], concededPlaylistIds: [], animationsEnabled: true, playlistMode: 'sequence' },
+    pauseScreen: { isActive: false, text: '', mediaUrl: '', audioUrl: '', mode: 'text' },
+    bottomBanner: { isActive: false, text: '', imageUrl: '', mode: 'scroll', speed: 30, size: 'M' },
+    subtitles: { isActive: false, text: '' },
+    introScreen: { isActive: false, startedAt: null, countdown: 10, soundPlaylistIds: [], playlistMode: 'sequence' },
+    sponsorLogo: { isActive: false, imageUrl: '', size: 80 },
+    cardEvent: { isActive: false, playerName: '', cardId: '', teamSide: 'team1', cardType: 'yellow' },
+    streamTitle: '',
+    ourTeam: null,
+    pauseScreenPlaylist: { soundPlaylistIds: [], playlistMode: 'sequence' }
+  }
+  const timerText = '45:00'
+  const scale = Math.min(0.25, settings.scale * 0.25)
+  const PreviewComponent = { classic: Classic, stadium: Stadium, flat: Flat, neon: Neon }[settings.scoreboard_style] || Classic
+  return (
+    <div className="relative overflow-hidden rounded-lg bg-green-800" style={{ height: '200px' }}>
+      <div className="absolute" style={{ transform: `scale(${scale})`, transformOrigin: settings.position.includes('top') ? 'top center' : 'bottom center' }}>
+        <PreviewComponent state={dummyState} settings={settings} timerText={timerText} />
+      </div>
+    </div>
+  )
+}
+
 function DesignTab({ settings, patchSettings }: any) {
   return (
     <section className="rounded-xl border border-white/20 bg-black/30 p-4">
       <h2 className="mb-3 text-lg font-semibold">Дизайн оверлея</h2>
+      <div className="mb-4">
+        <span className="mb-1 block text-sm">Превью</span>
+        <ScoreboardPreview settings={settings} />
+      </div>
       <div className="grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="mb-1 block text-sm">Стиль табло</span>
@@ -645,6 +678,8 @@ function MediaTab({ items, onUpload, onDelete }: any) {
     setFile(null)
   }
 
+  const audioItems = items.filter((i: any) => i.data_url.startsWith('data:audio/'))
+
   return (
     <section className="rounded-xl border border-white/20 bg-black/30 p-4">
       <h2 className="mb-3 text-lg font-semibold">Медиатека</h2>
@@ -663,22 +698,83 @@ function MediaTab({ items, onUpload, onDelete }: any) {
           </div>
         ))}
       </div>
+      {audioItems.length > 0 && (
+        <div className="mt-4">
+          <div className="mb-2 text-sm text-white/70">Аудио для плейлистов (ID: {audioItems.map((i: any) => i.id).join(', ')})</div>
+        </div>
+      )}
     </section>
   )
 }
 
-function FxTab({ state, patchState }: any) {
+function MediaPicker({ items, selectedIds, onChange, label }: { items: any[]; selectedIds: number[]; onChange: (ids: number[]) => void; label: string }) {
+  const audioItems = items.filter((i) => i.data_url.startsWith('data:audio/'))
+  const toggle = (id: number) => {
+    if (selectedIds.includes(id)) {
+      onChange(selectedIds.filter((x) => x !== id))
+    } else {
+      onChange([...selectedIds, id])
+    }
+  }
+  return (
+    <div className="mb-3">
+      <div className="mb-2 text-sm text-white/70">{label}</div>
+      <div className="grid max-h-32 grid-cols-3 gap-2 overflow-y-auto md:grid-cols-4">
+        {audioItems.map((item: any) => (
+          <button
+            key={item.id}
+            onClick={() => toggle(item.id)}
+            className={`truncate rounded p-2 text-xs ${selectedIds.includes(item.id) ? 'bg-emerald-500 text-black' : 'bg-white/10'}`}
+          >
+            {item.name}
+          </button>
+        ))}
+      </div>
+      {audioItems.length === 0 && <div className="text-xs text-white/40">Нет аудио в медиатеке</div>}
+    </div>
+  )
+}
+
+function FxTab({ state, patchState, items }: any) {
   const parseIds = (value: string) =>
     value
       .split(',')
       .map((it) => Number(it.trim()))
       .filter((n) => Number.isFinite(n) && n > 0)
 
+  const updatePlaylist = (key: string, ids: number[]) => {
+    const dots = ids.join(',')
+    if (key === 'goal') {
+      patchState({ goalAnimation: { ...state.goalAnimation, soundPlaylistIds: ids } })
+    } else if (key === 'conceded') {
+      patchState({ goalAnimation: { ...state.goalAnimation, concededPlaylistIds: ids } })
+    } else if (key === 'intro') {
+      patchState({ introScreen: { ...state.introScreen, soundPlaylistIds: ids } })
+    } else if (key === 'pause') {
+      patchState({ pauseScreenPlaylist: { ...state.pauseScreenPlaylist, soundPlaylistIds: ids } })
+    }
+  }
+
   return (
     <section className="rounded-xl border border-white/20 bg-black/30 p-4">
       <h2 className="mb-2 text-lg font-semibold">FX плейлисты</h2>
-      <p className="mb-3 text-sm text-white/70">Укажи ID треков из медиатеки через запятую: `1,2,3`</p>
-      <div className="grid gap-3 md:grid-cols-2">
+      <MediaPicker label="Голы" items={items} selectedIds={state.goalAnimation.soundPlaylistIds} onChange={(ids) => updatePlaylist('goal', ids)} />
+      <label className="block">
+        <span className="mb-1 block text-sm">Громкость: Голы {Math.round(state.goalAnimation.volume * 100)}%</span>
+        <input type="range" min={0} max={1} step={0.1} value={state.goalAnimation.volume} onChange={(e) => void patchState({ goalAnimation: { ...state.goalAnimation, volume: Number(e.target.value) } })} className="w-full" />
+      </label>
+      <MediaPicker label="Пропущенные" items={items} selectedIds={state.goalAnimation.concededPlaylistIds} onChange={(ids) => updatePlaylist('conceded', ids)} />
+      <MediaPicker label="Интро" items={items} selectedIds={state.introScreen.soundPlaylistIds} onChange={(ids) => updatePlaylist('intro', ids)} />
+      <label className="block">
+        <span className="mb-1 block text-sm">Громкость: Интро {Math.round(state.introScreen.volume * 100)}%</span>
+        <input type="range" min={0} max={1} step={0.1} value={state.introScreen.volume} onChange={(e) => void patchState({ introScreen: { ...state.introScreen, volume: Number(e.target.value) } })} className="w-full" />
+      </label>
+      <MediaPicker label="Пауза" items={items} selectedIds={state.pauseScreenPlaylist.soundPlaylistIds} onChange={(ids) => updatePlaylist('pause', ids)} />
+      <label className="block">
+        <span className="mb-1 block text-sm">Громкость: Пауза {Math.round(state.pauseScreenPlaylist.volume * 100)}%</span>
+        <input type="range" min={0} max={1} step={0.1} value={state.pauseScreenPlaylist.volume} onChange={(e) => void patchState({ pauseScreenPlaylist: { ...state.pauseScreenPlaylist, volume: Number(e.target.value) } })} className="w-full" />
+      </label>
+      <div className="mt-3 grid gap-3 md:grid-cols-2">
         <label className="block">
           <span className="mb-1 block text-sm">Голы (soundPlaylistIds)</span>
           <input
@@ -734,6 +830,7 @@ function AccessTab({ channels, onAdd, onDelete, onActive }: any) {
   const [name, setName] = useState('VK Channel')
   const [rtmp, setRtmp] = useState('rtmp://ovsu.okcdn.ru/input/')
   const [key, setKey] = useState('')
+  const [showKey, setShowKey] = useState(false)
 
   return (
     <section className="rounded-xl border border-white/20 bg-black/30 p-4">
@@ -741,17 +838,24 @@ function AccessTab({ channels, onAdd, onDelete, onActive }: any) {
       <div className="mb-4 grid gap-2 md:grid-cols-4">
         <input value={name} onChange={(e) => setName(e.target.value)} className="rounded bg-white/10 px-3 py-2" placeholder="Название" />
         <input value={rtmp} onChange={(e) => setRtmp(e.target.value)} className="rounded bg-white/10 px-3 py-2" placeholder="RTMP URL" />
-        <input value={key} onChange={(e) => setKey(e.target.value)} className="rounded bg-white/10 px-3 py-2" placeholder="Stream key" />
-        <button
-          onClick={() => {
-            if (!name || !rtmp || !key) return
-            void onAdd(name, rtmp, key)
-            setKey('')
-          }}
-          className="rounded bg-emerald-500 px-3 py-2 text-black"
-        >
-          Добавить
-        </button>
+        <div className="relative">
+          <input type={showKey ? 'text' : 'password'} value={key} onChange={(e) => setKey(e.target.value)} className="w-full rounded bg-white/10 px-3 py-2" placeholder="Stream key" />
+        </div>
+        <div className="flex gap-1">
+          <button onClick={() => setShowKey(!showKey)} className={`rounded bg-white/10 px-2 py-2 text-sm ${showKey ? 'text-yellow-400' : ''}`}>
+            {showKey ? '🙈' : '👁'}
+          </button>
+          <button
+            onClick={() => {
+              if (!name || !rtmp || !key) return
+              void onAdd(name, rtmp, key)
+              setKey('')
+            }}
+            className="flex-1 rounded bg-emerald-500 px-2 py-2 text-sm text-black"
+          >
+            +
+          </button>
+        </div>
       </div>
 
       <div className="space-y-2">
