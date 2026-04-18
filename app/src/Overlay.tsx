@@ -292,9 +292,18 @@ export default function Overlay() {
     return Math.max(0, state.introScreen.countdown - elapsed)
   }, [state.introScreen.countdown, state.introScreen.isActive, state.introScreen.startedAt, now])
 
+  const overlayStyle = {
+    width: 1920,
+    height: 1080,
+    maxWidth: '100%',
+    maxHeight: '100%',
+    aspectRatio: '16/9'
+  }
+
   return (
-    <div className="relative h-screen w-screen">
-      <div className={`absolute ${scoreBoardPos}`}>{scoreBoard}</div>
+    <div className="flex h-full w-full items-center justify-center bg-black">
+      <div className="relative" style={overlayStyle}>
+        <div className={`absolute ${scoreBoardPos}`}>{scoreBoard}</div>
 
       {goalVisible && state.goalAnimation.isActive ? (
         <motion.div
@@ -369,6 +378,7 @@ export default function Overlay() {
           </div>
         </div>
       ) : null}
+      </div>
     </div>
   )
 }
