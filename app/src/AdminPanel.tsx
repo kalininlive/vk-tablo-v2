@@ -7,7 +7,7 @@ import {
   useStreamControl,
   useVKChannels
 } from './useMatchState'
-import { Classic, Flat, Neon, Stadium } from './scoreboards'
+import { Classic, Flat, Neon, Stadium, Modern, Split } from './scoreboards'
 
 type TabId = 'air' | 'match' | 'design' | 'media' | 'fx' | 'access'
 
@@ -538,23 +538,38 @@ function ScoreboardPreview({ settings }: { settings: any }) {
     teams: { team1: { name: 'Команда 1', city: 'Москва', logo: '', color: '#ef4444' }, team2: { name: 'Команда 2', city: 'СПб', logo: '', color: '#3b82f6' } },
     score: { team1: 2, team2: 1 },
     timer: { isRunning: false, half: 1, accumulatedTime: 2700000, startTimestamp: null },
-    goalAnimation: { isActive: false, goalId: '', teamSide: 'team1', teamName: '', newScore: { team1: 0, team2: 0 }, soundPlaylistIds: [], concededPlaylistIds: [], animationsEnabled: true, playlistMode: 'sequence' },
+    goalAnimation: { isActive: false, goalId: '', teamSide: 'team1', teamName: '', newScore: { team1: 0, team2: 0 }, soundPlaylistIds: [], concededPlaylistIds: [], animationsEnabled: true, playlistMode: 'sequence', volume: 1 },
     pauseScreen: { isActive: false, text: '', mediaUrl: '', audioUrl: '', mode: 'text' },
     bottomBanner: { isActive: false, text: '', imageUrl: '', mode: 'scroll', speed: 30, size: 'M' },
-    subtitles: { isActive: false, text: '' },
-    introScreen: { isActive: false, startedAt: null, countdown: 10, soundPlaylistIds: [], playlistMode: 'sequence' },
+    subtitles: { isActive: false, text: '', size: 'M' },
+    introScreen: { isActive: false, startedAt: null, countdown: 10, soundPlaylistIds: [], playlistMode: 'sequence', volume: 1 },
     sponsorLogo: { isActive: false, imageUrl: '', size: 80 },
     cardEvent: { isActive: false, playerName: '', cardId: '', teamSide: 'team1', cardType: 'yellow' },
     streamTitle: '',
     ourTeam: null,
-    pauseScreenPlaylist: { soundPlaylistIds: [], playlistMode: 'sequence' }
+    pauseScreenPlaylist: { soundPlaylistIds: [], playlistMode: 'sequence', volume: 1 }
   }
   const timerText = '45:00'
-  const scale = Math.min(0.25, settings.scale * 0.25)
-  const PreviewComponent = { classic: Classic, stadium: Stadium, flat: Flat, neon: Neon }[settings.scoreboard_style] || Classic
+  const PreviewComponent = { classic: Classic, stadium: Stadium, flat: Flat, neon: Neon, modern: Modern, split: Split }[settings.scoreboard_style] || Classic
+  const scale = settings.scale || 1
+  
+  const posMap = {
+    'top-left': 'top-4 left-4',
+    'top-center': 'top-4 left-1/2 -translate-x-1/2',
+    'top-right': 'top-4 right-4',
+    'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+    'bottom-left': 'bottom-4 left-4',
+    'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+    'bottom-right': 'bottom-4 right-4'
+  }
+  const positionClass = posMap[settings.position as keyof typeof posMap] || 'top-4 left-4'
+  
   return (
-    <div className="relative overflow-hidden rounded-lg bg-green-800" style={{ height: '200px' }}>
-      <div className="absolute" style={{ transform: `scale(${scale})`, transformOrigin: settings.position.includes('top') ? 'top center' : 'bottom center' }}>
+    <div className="relative w-full overflow-hidden rounded-lg bg-black" style={{ aspectRatio: '16/9' }}>
+      <div 
+        className={`absolute ${positionClass}`}
+        style={{ transform: `scale(${scale})`, transformOrigin: 'top left' }}
+      >
         <PreviewComponent state={dummyState} settings={settings} timerText={timerText} />
       </div>
     </div>
@@ -565,69 +580,93 @@ function DesignTab({ settings, patchSettings }: any) {
   return (
     <section className="rounded-xl border border-white/20 bg-black/30 p-4">
       <h2 className="mb-3 text-lg font-semibold">Дизайн оверлея</h2>
+      
       <div className="mb-4">
         <span className="mb-1 block text-sm">Превью</span>
         <ScoreboardPreview settings={settings} />
       </div>
-      <div className="grid gap-3 md:grid-cols-2">
-        <label className="block">
-          <span className="mb-1 block text-sm">Стиль табло</span>
-          <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.scoreboard_style} onChange={(e) => void patchSettings({ scoreboard_style: e.target.value })}>
-            <option value="classic">Classic</option>
-            <option value="stadium">Stadium</option>
-            <option value="flat">Flat</option>
-            <option value="neon">Neon</option>
-            <option value="modern">Modern (UEFA)</option>
-            <option value="split">Split (pre-match)</option>
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm">Позиция</span>
-          <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.position} onChange={(e) => void patchSettings({ position: e.target.value })}>
-            {['top-left', 'top-center', 'top-right', 'center', 'bottom-left', 'bottom-center', 'bottom-right'].map((pos) => (
-              <option key={pos} value={pos}>{pos}</option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm">Scale {settings.scale.toFixed(2)}x</span>
-          <input type="range" min={0.5} max={2} step={0.05} value={settings.scale} onChange={(e) => void patchSettings({ scale: Number(e.target.value) })} className="w-full" />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm">Logo shape</span>
-          <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.logo_shape} onChange={(e) => void patchSettings({ logo_shape: e.target.value })}>
-            {['square', 'rounded', 'circle', 'circle-border'].map((shape) => (
-              <option key={shape} value={shape}>{shape}</option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm">Score font</span>
-          <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.score_font} onChange={(e) => void patchSettings({ score_font: e.target.value })}>
-            {['default', 'mono', 'bold'].map((font) => (
-              <option key={font} value={font}>{font}</option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm">Timer warning min</span>
-          <input type="number" className="w-full rounded bg-white/10 px-3 py-2" value={settings.timer_warning_min} onChange={(e) => void patchSettings({ timer_warning_min: Number(e.target.value) || 35 })} />
-        </label>
-        <Toggle label="Glass effect" value={settings.glass_enabled} onChange={(value) => void patchSettings({ glass_enabled: value })} />
-        <Toggle label="Accent strip" value={settings.strip_enabled} onChange={(value) => void patchSettings({ strip_enabled: value })} />
-        <label className="block">
-          <span className="mb-1 block text-sm">Backdrop color</span>
-          <input type="color" value={settings.backdrop_color} onChange={(e) => void patchSettings({ backdrop_color: e.target.value })} />
-        </label>
-        <label className="block">
-          <span className="mb-1 block text-sm">Backdrop opacity {settings.backdrop_opacity}</span>
-          <input type="range" min={0} max={1} step={0.05} value={settings.backdrop_opacity} onChange={(e) => void patchSettings({ backdrop_opacity: Number(e.target.value) })} className="w-full" />
-        </label>
-        <ColorInput label="Team name color" value={settings.color_team_name} onChange={(value) => void patchSettings({ color_team_name: value })} />
-        <ColorInput label="City color" value={settings.color_city} onChange={(value) => void patchSettings({ color_city: value })} />
-        <ColorInput label="Timer color" value={settings.color_timer} onChange={(value) => void patchSettings({ color_timer: value })} />
-        <ColorInput label="Half color" value={settings.color_half.startsWith('#') ? settings.color_half : '#ffffff'} onChange={(value) => void patchSettings({ color_half: value })} />
-        <ColorInput label="Score color" value={settings.color_score} onChange={(value) => void patchSettings({ color_score: value })} />
+      
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-white/70">Общие</h3>
+          <label className="block">
+            <span className="mb-1 block text-sm">Стиль табло</span>
+            <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.scoreboard_style} onChange={(e) => void patchSettings({ scoreboard_style: e.target.value })}>
+              <option value="classic">Classic</option>
+              <option value="stadium">Stadium</option>
+              <option value="flat">Flat</option>
+              <option value="neon">Neon</option>
+              <option value="modern">Modern (UEFA)</option>
+              <option value="split">Split (pre-match)</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm">Scale {settings.scale.toFixed(2)}x</span>
+            <input type="range" min={0.5} max={2} step={0.05} value={settings.scale} onChange={(e) => void patchSettings({ scale: Number(e.target.value) })} className="w-full" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm">Позиция</span>
+            <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.position} onChange={(e) => void patchSettings({ position: e.target.value })}>
+              {['top-left', 'top-center', 'top-right', 'center', 'bottom-left', 'bottom-center', 'bottom-right'].map((pos) => (
+                <option key={pos} value={pos}>{pos}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-white/70">Тайминг</h3>
+          <label className="block">
+            <span className="mb-1 block text-sm">Timer warning min</span>
+            <input type="number" className="w-full rounded bg-white/10 px-3 py-2" value={settings.timer_warning_min} onChange={(e) => void patchSettings({ timer_warning_min: Number(e.target.value) || 35 })} />
+          </label>
+        </div>
+        
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-white/70">Визуальные эффекты</h3>
+          <Toggle label="Glass effect" value={settings.glass_enabled} onChange={(value) => void patchSettings({ glass_enabled: value })} />
+          <Toggle label="Accent strip" value={settings.strip_enabled} onChange={(value) => void patchSettings({ strip_enabled: value })} />
+          <label className="block">
+            <span className="mb-1 block text-sm">Backdrop opacity {Math.round(settings.backdrop_opacity * 100)}%</span>
+            <input type="range" min={0} max={1} step={0.05} value={settings.backdrop_opacity} onChange={(e) => void patchSettings({ backdrop_opacity: Number(e.target.value) })} className="w-full" />
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm">Backdrop color</span>
+            <input type="color" value={settings.backdrop_color} onChange={(e) => void patchSettings({ backdrop_color: e.target.value })} />
+          </label>
+        </div>
+        
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-white/70">Цвета</h3>
+          <ColorInput label="Team name" value={settings.color_team_name} onChange={(value) => void patchSettings({ color_team_name: value })} />
+          <ColorInput label="City" value={settings.color_city} onChange={(value) => void patchSettings({ color_city: value })} />
+          <ColorInput label="Timer" value={settings.color_timer} onChange={(value) => void patchSettings({ color_timer: value })} />
+          <ColorInput label="Half" value={settings.color_half.startsWith('#') ? settings.color_half : '#ffffff'} onChange={(value) => void patchSettings({ color_half: value })} />
+          <ColorInput label="Score" value={settings.color_score} onChange={(value) => void patchSettings({ color_score: value })} />
+        </div>
+        
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-white/70">Логотип</h3>
+          <label className="block">
+            <span className="mb-1 block text-sm">Logo shape</span>
+            <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.logo_shape} onChange={(e) => void patchSettings({ logo_shape: e.target.value })}>
+              {['square', 'rounded', 'circle', 'circle-border'].map((shape) => (
+                <option key={shape} value={shape}>{shape}</option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="mb-1 block text-sm">Score font</span>
+            <select className="w-full rounded bg-white/10 px-3 py-2" value={settings.score_font} onChange={(e) => void patchSettings({ score_font: e.target.value })}>
+              {['default', 'mono', 'bold'].map((font) => (
+                <option key={font} value={font}>{font}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        
+        <div className="space-y-3">
+          <h3 className="text-sm font-semibold text-white/70">Действия</h3>
         <button
           className="rounded bg-white/10 px-3 py-2"
           onClick={() =>
@@ -654,46 +693,47 @@ function DesignTab({ settings, patchSettings }: any) {
             })
           }
         >
-          Сбросить по умолчанию
-        </button>
-        <div className="flex gap-2">
-          <button
-            className="flex-1 rounded bg-blue-500/80 px-2 py-2 text-sm"
-            onClick={() => {
-              const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement('a')
-              a.href = url
-              a.download = 'overlay-settings.json'
-              a.click()
-              URL.revokeObjectURL(url)
-            }}
-          >
-            Экспорт
+            Сбросить по умолчанию
           </button>
-          <input
-            type="file"
-            accept=".json"
-            className="hidden"
-            id="import-settings"
-            onChange={(e) => {
-              const file = e.target.files?.[0]
-              if (!file) return
-              const reader = new FileReader()
-              reader.onload = (ev) => {
-                try {
-                  const imported = JSON.parse(ev.target?.result as string)
-                  patchSettings(imported)
-                } catch {
-                  alert('Ошибка импорта')
+          <div className="mt-4 flex gap-2">
+            <button
+              className="flex-1 rounded bg-blue-500/80 px-3 py-2 text-sm"
+              onClick={() => {
+                const blob = new Blob([JSON.stringify(settings, null, 2)], { type: 'application/json' })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement('a')
+                a.href = url
+                a.download = 'overlay-settings.json'
+                a.click()
+                URL.revokeObjectURL(url)
+              }}
+            >
+              Экспорт
+            </button>
+            <input
+              type="file"
+              accept=".json"
+              className="hidden"
+              id="import-settings"
+              onChange={(e) => {
+                const file = e.target.files?.[0]
+                if (!file) return
+                const reader = new FileReader()
+                reader.onload = (ev) => {
+                  try {
+                    const imported = JSON.parse(ev.target?.result as string)
+                    patchSettings(imported)
+                  } catch {
+                    alert('Ошибка импорта')
                 }
               }
               reader.readAsText(file)
             }}
           />
-          <label htmlFor="import-settings" className="flex-1 cursor-pointer rounded bg-emerald-500/80 px-2 py-2 text-center text-sm">
+          <label htmlFor="import-settings" className="flex-1 cursor-pointer rounded bg-emerald-500/80 px-3 py-2 text-center text-sm">
             Импорт
           </label>
+        </div>
         </div>
       </div>
     </section>
